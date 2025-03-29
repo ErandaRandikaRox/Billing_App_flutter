@@ -44,46 +44,48 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CustomAppBar(
-        title: "Home",
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SettingsPage()),
-              );
-            },
-          ),
-        ],
-        showDrawerIcons: true,
-        showBackButton: false,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Colors.blue.shade50, Colors.white],
-          ),
+    return SafeArea(
+      child: Scaffold(
+        appBar: CustomAppBar(
+          title: "Home",
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SettingsPage()),
+                );
+              },
+            ),
+          ],
+          showDrawerIcons: true,
+          showBackButton: false,
         ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildWelcomeSection(),
-                  const SizedBox(height: 20),
-                  _buildSelectionSection(),
-                  const SizedBox(height: 20),
-                  _buildStockSection(),
-                  const SizedBox(height: 20),
-                  _buildControlButtons(),
-                ],
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Colors.blue.shade50, Colors.white],
+            ),
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildWelcomeSection(),
+                    const SizedBox(height: 20),
+                    _buildSelectionSection(),
+                    const SizedBox(height: 20),
+                    _buildStockSection(),
+                    const SizedBox(height: 20),
+                    _buildControlButtons(),
+                  ],
+                ),
               ),
             ),
           ),

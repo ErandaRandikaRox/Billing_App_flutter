@@ -1,3 +1,5 @@
+// this is for the setting page this can change the app settings
+
 import 'package:billing_app/pages/profile/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:billing_app/widgets/custom_app_bar.dart';
@@ -47,6 +49,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       MaterialPageRoute(builder: (context) => ProfilePage()),
                     );
                   },
+                  toggle_button: false,
                 ),
                 _buildSettingItem(
                   context,
@@ -56,6 +59,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   () {
                     // Notification settings action
                   },
+                  toggle_button: true,
                 ),
                 _buildSettingItem(
                   context,
@@ -65,6 +69,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   () {
                     // Appearance settings action
                   },
+                  toggle_button: true,
                 ),
                 _buildSettingItem(
                   context,
@@ -74,6 +79,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   () {
                     // Privacy settings action
                   },
+                  toggle_button: false,
                 ),
                 _buildSettingItem(
                   context,
@@ -83,6 +89,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   () {
                     // Help settings action
                   },
+                  toggle_button: false,
                 ),
                 _buildSettingItem(
                   context,
@@ -92,6 +99,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   () {
                     // About settings action
                   },
+                  toggle_button: false,
                 ),
               ],
             ),
@@ -106,8 +114,9 @@ class _SettingsPageState extends State<SettingsPage> {
     IconData icon,
     String title,
     String subtitle,
-    VoidCallback onTap,
-  ) {
+    VoidCallback onTap, {
+    required bool toggle_button,
+  }) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
@@ -115,7 +124,16 @@ class _SettingsPageState extends State<SettingsPage> {
         leading: Icon(icon, color: Colors.blue.shade800),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+
+        trailing:
+            toggle_button
+                ? Switch(
+                  value: false,
+                  onChanged: (value) {
+                    // Handle toggle action
+                  },
+                )
+                : const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: onTap,
       ),
     );
