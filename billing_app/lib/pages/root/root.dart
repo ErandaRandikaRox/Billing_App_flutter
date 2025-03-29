@@ -65,11 +65,12 @@ class _MakeRootPageState extends State<MakeRootPage> {
         title: 'Make Bill',
         actions: [
           IconButton(
-            icon: const Icon(Icons.save, color: Colors.black),
+            icon: const Icon(Icons.push_pin_sharp, color: Colors.black),
             onPressed: () => _showSnackBar('Bill Saved'),
           ),
         ],
-        showDrawerIcons: true, showBackButton: false,
+        showDrawerIcons: true,
+        showBackButton: false,
       ),
       body: SingleChildScrollView(
         child: Padding(
