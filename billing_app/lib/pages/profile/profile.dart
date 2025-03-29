@@ -17,7 +17,7 @@ class ProfilePage extends StatelessWidget {
             },
           ),
         ],
-        showDrawerIcons: true,
+        showDrawerIcons: true, showBackButton: false,
       ),
       body: SingleChildScrollView(
         child: Container(

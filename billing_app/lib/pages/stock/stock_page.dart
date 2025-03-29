@@ -15,7 +15,7 @@ class _StockPageState extends State<StockPage> {
       appBar: CustomAppBar(
         title: "Stock Page",
         actions: [Icon(Icons.shop)],
-        showDrawerIcons: true,
+        showDrawerIcons: true, showBackButton: false,
       ),
       body: Center(child: Text("Stock Page")),
     );

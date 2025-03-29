@@ -11,7 +11,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     required this.title,
     required this.actions,
-    required this.showDrawerIcons,
+    required this.showDrawerIcons, required bool showBackButton,
   });
 
   @override

@@ -1,5 +1,6 @@
 import 'package:billing_app/pages/home/widgets/drop_down_text.dart';
 import 'package:billing_app/pages/root/root.dart';
+import 'package:billing_app/pages/setting/setting.dart';
 import 'package:billing_app/widgets/drop_down.dart';
 import 'package:billing_app/widgets/custom_table.dart';
 import 'package:billing_app/widgets/custom_app_bar.dart';
@@ -50,11 +51,15 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              // TODO: Implement settings navigation
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsPage()),
+              );
             },
           ),
         ],
         showDrawerIcons: true,
+        showBackButton: false,
       ),
       body: Container(
         decoration: BoxDecoration(
