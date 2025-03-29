@@ -17,7 +17,7 @@ class _SettingsPageState extends State<SettingsPage> {
           title: "Settings",
           actions: [Icon(Icons.search)],
           showDrawerIcons: false,
-          showBackButton: true
+          showBackButton: true,
         ),
         body: SingleChildScrollView(
           child: Padding(
@@ -106,7 +106,7 @@ class _SettingsPageState extends State<SettingsPage> {
   ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 1,
+      elevation: 2,
       child: ListTile(
         leading: Icon(icon, color: Colors.blue.shade800),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
