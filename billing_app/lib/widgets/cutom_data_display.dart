@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-
-
+// ignore: unused_element
 class _customInput extends StatelessWidget {
   final TextEditingController storeNameController;
   final void Function(String) onSubmitted;

@@ -1,5 +1,5 @@
 // custom_app_bar.dart
-import 'package:billing_app/widgets/custom_drawer.dart';
+
 import 'package:flutter/material.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -28,7 +28,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       return IconButton(
                         icon: Icon(Icons.menu),
                         onPressed: () {
-                          // This opens the drawer defined in the Scaffold
                           Scaffold.of(context).openDrawer();
                         },
                       );
