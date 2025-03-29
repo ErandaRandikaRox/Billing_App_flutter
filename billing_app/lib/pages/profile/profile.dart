@@ -1,3 +1,4 @@
+import 'package:billing_app/navigation_bar.dart';
 import 'package:billing_app/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 
@@ -17,7 +18,8 @@ class ProfilePage extends StatelessWidget {
             },
           ),
         ],
-        showDrawerIcons: true, showBackButton: false,
+        showDrawerIcons: true,
+        showBackButton: false,
       ),
       body: SingleChildScrollView(
         child: Container(

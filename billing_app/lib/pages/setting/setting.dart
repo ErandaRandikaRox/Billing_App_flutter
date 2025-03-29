@@ -1,3 +1,4 @@
+import 'package:billing_app/pages/profile/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:billing_app/widgets/custom_app_bar.dart';
 
@@ -41,7 +42,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   "Account",
                   "Manage your account information",
                   () {
-                    // Account settings action
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ProfilePage()),
+                    );
                   },
                 ),
                 _buildSettingItem(
