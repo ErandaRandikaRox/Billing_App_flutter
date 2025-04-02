@@ -1,6 +1,7 @@
 import 'package:billing_app/pages/home/widgets/drop_down_text.dart';
 import 'package:billing_app/pages/root/root.dart';
 import 'package:billing_app/pages/setting/setting.dart';
+import 'package:billing_app/widgets/custom_drawer.dart';
 import 'package:billing_app/widgets/drop_down.dart';
 import 'package:billing_app/widgets/custom_table.dart';
 import 'package:billing_app/widgets/custom_app_bar.dart';
@@ -62,6 +63,7 @@ class _HomePageState extends State<HomePage> {
           showDrawerIcons: true,
           showBackButton: false,
         ),
+        drawer: const CustomDrawer(),
         body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(

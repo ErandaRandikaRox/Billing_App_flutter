@@ -1,3 +1,4 @@
+import 'package:billing_app/widgets/custom_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
@@ -25,18 +26,18 @@ class _MyNavigationbarState extends State<MyNavigationbar> {
   @override
   Widget build(BuildContext context) {
     // Set system UI overlay style
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Colors.white,
-      systemNavigationBarIconBrightness: Brightness.dark,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+    );
 
     return Scaffold(
-      body: IndexedStack(
-        index: currentPageIndex,
-        children: _pages,
-      ),
+      drawer: CustomDrawer(), // Place the drawer here
+      body: IndexedStack(index: currentPageIndex, children: _pages),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,

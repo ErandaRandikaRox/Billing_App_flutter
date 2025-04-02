@@ -1,5 +1,6 @@
 import 'package:billing_app/widgets/custom_app_bar.dart';
 import 'package:billing_app/widgets/custom_button.dart';
+import 'package:billing_app/widgets/custom_drawer.dart';
 import 'package:billing_app/widgets/custom_input_field.dart';
 import 'package:billing_app/widgets/custom_table.dart';
 import 'package:flutter/material.dart';
@@ -72,6 +73,7 @@ class _MakeRootPageState extends State<MakeRootPage> {
         showDrawerIcons: true,
         showBackButton: false,
       ),
+      drawer: const CustomDrawer(),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
