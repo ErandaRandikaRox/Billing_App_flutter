@@ -1,4 +1,8 @@
 import 'package:billing_app/pages/add%20stores/add_stores.dart';
+import 'package:billing_app/pages/credit_bill/credit_bill_page.dart';
+import 'package:billing_app/pages/pinned_bill/pinnied_bill.dart';
+import 'package:billing_app/pages/salary/salary_page.dart';
+import 'package:billing_app/pages/setting/setting.dart';
 import 'package:flutter/material.dart';
 
 class CustomDrawer extends StatelessWidget {
@@ -28,7 +32,7 @@ class CustomDrawer extends StatelessWidget {
                     color: Colors.white.withOpacity(0.2),
                   ),
                   child: const Icon(
-                    Icons.delivery_dining,
+                    Icons.local_shipping,
                     color: Colors.white,
                     size: 64,
                   ),
@@ -63,11 +67,24 @@ class CustomDrawer extends StatelessWidget {
                 ),
                 _buildDrawerItem(
                   context: context,
+                  icon: Icons.money,
+                  title: "Pined Bill",
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => PinniedBill()),
+                    );
+                  },
+                ),
+                _buildDrawerItem(
+                  context: context,
                   icon: Icons.credit_card,
                   title: "Credit Bill",
                   onTap: () {
-                    Navigator.pop(context);
-                    // Navigate to credit bill page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => CreditBillPage()),
+                    );
                   },
                 ),
                 _buildDrawerItem(
@@ -75,27 +92,23 @@ class CustomDrawer extends StatelessWidget {
                   icon: Icons.money,
                   title: "Salary",
                   onTap: () {
-                    Navigator.pop(context);
-                    // Navigate to salary page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SalaryPage()),
+                    );
                   },
                 ),
-                _buildDrawerItem(
-                  context: context,
-                  icon: Icons.money,
-                  title: "Pined Bill",
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Navigate to salary page
-                  },
-                ),
+
                 const Divider(),
                 _buildDrawerItem(
                   context: context,
                   icon: Icons.settings,
                   title: "Settings",
                   onTap: () {
-                    Navigator.pop(context);
-                    // Navigate to settings page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SettingsPage()),
+                    );
                   },
                 ),
               ],
@@ -118,7 +131,6 @@ class CustomDrawer extends StatelessWidget {
                   onTap: () {
                     // Handle logout
                     Navigator.pop(context);
-                    // Implement logout functionality
                   },
                 ),
               ],

@@ -1,4 +1,5 @@
 import 'package:billing_app/widgets/custom_app_bar.dart';
+import 'package:billing_app/widgets/custom_drawer.dart';
 import 'package:flutter/material.dart';
 
 class CreditBillPage extends StatelessWidget {
@@ -13,6 +14,7 @@ class CreditBillPage extends StatelessWidget {
         showDrawerIcons: true,
         showBackButton: false,
       ),
+      drawer: CustomDrawer(),
     );
   }
 }
