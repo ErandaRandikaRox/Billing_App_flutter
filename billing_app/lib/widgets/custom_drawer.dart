@@ -1,3 +1,4 @@
+import 'package:billing_app/pages/add%20stores/add_stores.dart';
 import 'package:flutter/material.dart';
 
 class CustomDrawer extends StatelessWidget {
@@ -54,8 +55,10 @@ class CustomDrawer extends StatelessWidget {
                   icon: Icons.store,
                   title: "Add Stores",
                   onTap: () {
-                    Navigator.pop(context);
-                    // Navigate to stores page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => AddStores()),
+                    );
                   },
                 ),
                 _buildDrawerItem(
