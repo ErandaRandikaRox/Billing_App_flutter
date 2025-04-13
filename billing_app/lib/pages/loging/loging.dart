@@ -1,4 +1,5 @@
 import 'package:billing_app/navigation_bar.dart';
+import 'package:billing_app/pages/sigup/signup.dart';
 import 'package:flutter/material.dart';
 
 class Login extends StatefulWidget {
@@ -232,7 +233,10 @@ class _LoginState extends State<Login> {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context)=> SignUp()));
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => Register()),
+                          );
                         },
                         child: const Text(
                           "Sign Up",
