@@ -2,7 +2,6 @@ import 'package:billing_app/navigation_bar.dart';
 import 'package:billing_app/pages/loging/loging.dart';
 import 'package:flutter/material.dart';
 
-
 class Register extends StatefulWidget {
   const Register({super.key});
 
@@ -14,7 +13,7 @@ class _RegisterState extends State<Register> {
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -23,10 +22,7 @@ class _RegisterState extends State<Register> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Colors.blueGrey.shade800,
-              Colors.blueGrey.shade500,
-            ],
+            colors: [Colors.blueGrey.shade800, Colors.blueGrey.shade500],
           ),
         ),
         child: SafeArea(
@@ -44,35 +40,35 @@ class _RegisterState extends State<Register> {
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.account_balance_wallet_rounded, 
-                      size: 80, 
-                      color: Colors.white
+                      Icons.account_balance_wallet_rounded,
+                      size: 80,
+                      color: Colors.white,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   const Text(
                     "Create Account",
                     style: TextStyle(
-                      fontSize: 32, 
+                      fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   Text(
                     "Sign up to get started with Billing App",
                     style: TextStyle(
-                      fontSize: 16, 
+                      fontSize: 16,
                       color: Colors.white.withOpacity(0.8),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 40),
-                  
+
                   // Registration Form
                   Container(
                     padding: const EdgeInsets.all(24),
@@ -124,9 +120,9 @@ class _RegisterState extends State<Register> {
                               return null;
                             },
                           ),
-                          
+
                           const SizedBox(height: 20),
-                          
+
                           // Email Field
                           const Text(
                             "Email",
@@ -155,15 +151,17 @@ class _RegisterState extends State<Register> {
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter your email';
-                              } else if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                              } else if (!RegExp(
+                                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                              ).hasMatch(value)) {
                                 return 'Please enter a valid email address';
                               }
                               return null;
                             },
                           ),
-                          
+
                           const SizedBox(height: 20),
-                          
+
                           // Phone Number
                           const Text(
                             "Phone Number",
@@ -196,9 +194,9 @@ class _RegisterState extends State<Register> {
                               return null;
                             },
                           ),
-                          
+
                           const SizedBox(height: 20),
-                          
+
                           // Password Field
                           const Text(
                             "Password",
@@ -215,8 +213,8 @@ class _RegisterState extends State<Register> {
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _isPasswordVisible 
-                                      ? Icons.visibility 
+                                  _isPasswordVisible
+                                      ? Icons.visibility
                                       : Icons.visibility_off,
                                 ),
                                 onPressed: () {
@@ -245,9 +243,9 @@ class _RegisterState extends State<Register> {
                               return null;
                             },
                           ),
-                          
+
                           const SizedBox(height: 20),
-                          
+
                           // Confirm Password Field
                           const Text(
                             "Confirm Password",
@@ -264,13 +262,14 @@ class _RegisterState extends State<Register> {
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _isConfirmPasswordVisible 
-                                      ? Icons.visibility 
+                                  _isConfirmPasswordVisible
+                                      ? Icons.visibility
                                       : Icons.visibility_off,
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                                    _isConfirmPasswordVisible =
+                                        !_isConfirmPasswordVisible;
                                   });
                                 },
                               ),
@@ -294,14 +293,14 @@ class _RegisterState extends State<Register> {
                               return null;
                             },
                           ),
-                          
+
                           const SizedBox(height: 24),
-                          
+
                           // Terms and Conditions Checkbox
                           Row(
                             children: [
                               Checkbox(
-                                value: false, 
+                                value: false,
                                 onChanged: (value) {
                                   // Handle checkbox state
                                 },
@@ -318,9 +317,9 @@ class _RegisterState extends State<Register> {
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 24),
-                          
+
                           // Register Button
                           SizedBox(
                             width: double.infinity,
@@ -331,13 +330,16 @@ class _RegisterState extends State<Register> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => const MyNavigationbar(),
+                                      builder:
+                                          (context) => const MyNavigationbar(),
                                     ),
                                   );
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 backgroundColor: Colors.blueGrey.shade700,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
@@ -358,18 +360,16 @@ class _RegisterState extends State<Register> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Login prompt
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         "Already have an account?",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                        ),
+                        style: TextStyle(color: Colors.white.withOpacity(0.8)),
                       ),
                       TextButton(
                         onPressed: () {
@@ -380,11 +380,21 @@ class _RegisterState extends State<Register> {
                             ),
                           );
                         },
-                        child: const Text(
-                          "Sign In",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const Login(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            "Sign In",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),

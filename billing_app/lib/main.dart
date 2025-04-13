@@ -1,6 +1,5 @@
 import 'package:billing_app/pages/loging/loging.dart';
 import 'package:billing_app/theme/theme_data.dart';
-import 'package:billing_app/navigation_bar.dart';
 import 'package:flutter/material.dart';
 
 void main() {
