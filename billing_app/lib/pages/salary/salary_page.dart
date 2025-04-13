@@ -11,8 +11,8 @@ class SalaryPage extends StatelessWidget {
       appBar: CustomAppBar(
         title: "Salary Page",
         actions: [],
-        showDrawerIcons: true,
-        showBackButton: false,
+        showDrawerIcons: false,
+        showBackButton: true,
       ),
       drawer: CustomDrawer(),
     );

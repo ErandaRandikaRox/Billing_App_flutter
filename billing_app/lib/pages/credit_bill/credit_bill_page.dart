@@ -15,6 +15,7 @@ class CreditBillPage extends StatelessWidget {
         title: Text(title),
         subtitle: Text("Bill amount: $amount"),
         trailing: Icon(Icons.arrow_forward_ios),
+
         onTap: () {
           // Handle action if needed
         },
@@ -28,8 +29,8 @@ class CreditBillPage extends StatelessWidget {
       appBar: CustomAppBar(
         title: "Credit Bill Page",
         actions: [Icon(Icons.credit_card)],
-        showDrawerIcons: true,
-        showBackButton: false,
+        showDrawerIcons: false,
+        showBackButton: true,
       ),
       drawer: CustomDrawer(),
       body: SingleChildScrollView(
