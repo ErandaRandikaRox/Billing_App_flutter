@@ -1,5 +1,6 @@
 import 'package:billing_app/navigation_bar.dart';
 import 'package:billing_app/pages/sigup/signup.dart';
+import 'package:billing_app/services/auth/auth_service.dart';
 import 'package:flutter/material.dart';
 
 class Login extends StatefulWidget {
@@ -12,9 +13,28 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
+    void signInwithEmailPassword(String email, password) async {
+      // get the auth services
+      final _authService = AuthService();
+
+      // signin with email
+      try {
+        await _authService.signInwithEmailPassword(email, password);
+      }
+      // display an error
+      catch (e) {
+        showDialog(
+          context: context,
+          builder:
+              (context) => AlertDialog(title: Text("You are not registed")),
+        );
+      }
+    }
 
     return Scaffold(
       body: Container(
@@ -98,6 +118,7 @@ class _LoginState extends State<Login> {
                           ),
                           const SizedBox(height: 8),
                           TextFormField(
+                            controller: _emailController,
                             decoration: InputDecoration(
                               hintText: "Enter your email or username",
                               prefixIcon: const Icon(Icons.person_outline),
@@ -131,6 +152,7 @@ class _LoginState extends State<Login> {
                           ),
                           const SizedBox(height: 8),
                           TextFormField(
+                            controller: _passwordController,
                             obscureText: !_isPasswordVisible,
                             decoration: InputDecoration(
                               hintText: "Enter your password",
