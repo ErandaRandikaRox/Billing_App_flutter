@@ -1,3 +1,4 @@
+import 'package:billing_app/services/data/stores_model.dart';
 import 'package:billing_app/widgets/custom_app_bar.dart';
 import 'package:billing_app/widgets/custom_drawer.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,11 @@ class AddStores extends StatefulWidget {
 
 class _AddStoresState extends State<AddStores> {
   final _formKey = GlobalKey<FormState>();
+  final _storeNameController = TextEditingController();
+  final _storeAddressController = TextEditingController();
+  final _contactNumberController = TextEditingController();
+  String? selectedCategory;
+  bool _isLoading = false;
 
   // Sample store categories
   final List<Map<String, dynamic>> categories = [
@@ -21,14 +27,74 @@ class _AddStoresState extends State<AddStores> {
     {'name': 'Clothing', 'icon': Icons.checkroom},
   ];
 
-  // Sample recently added stores
+  // Sample recently added stores (replace with Firestore data)
   final List<Map<String, dynamic>> recentStores = [
     {'name': 'Central Market', 'category': 'Grocery', 'visits': 8},
     {'name': 'Tech Galaxy', 'category': 'Electronics', 'visits': 3},
     {'name': 'Health Plus', 'category': 'Pharmacy', 'visits': 5},
   ];
 
-  String? selectedCategory;
+  // Firestore service instance
+  final FirestoreServices _db = FirestoreServices();
+
+  @override
+  void dispose() {
+    _storeNameController.dispose();
+    _storeAddressController.dispose();
+    _contactNumberController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _addStore() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+      try {
+        await _db.saveStoreToDatabase(
+          _storeNameController.text,
+          selectedCategory!,
+          _storeAddressController.text.isEmpty
+              ? null
+              : _storeAddressController.text,
+          _contactNumberController.text.isEmpty
+              ? null
+              : _contactNumberController.text,
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Store added successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Clear form
+          _storeNameController.clear();
+          _storeAddressController.clear();
+          _contactNumberController.clear();
+          setState(() {
+            selectedCategory = null;
+          });
+          _formKey.currentState!.reset();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error adding store: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +113,7 @@ class _AddStoresState extends State<AddStores> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header section with illustration
+            // Header section
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -92,9 +158,7 @@ class _AddStoresState extends State<AddStores> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).primaryColor.withOpacity(0.1),
+                          color: Theme.of(context).primaryColor.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -140,6 +204,7 @@ class _AddStoresState extends State<AddStores> {
 
                     // Store name field
                     TextFormField(
+                      controller: _storeNameController,
                       decoration: InputDecoration(
                         labelText: "Store Name",
                         hintText: "Enter store name",
@@ -172,19 +237,18 @@ class _AddStoresState extends State<AddStores> {
                         filled: true,
                         fillColor: Colors.grey[50],
                       ),
-                      items:
-                          categories.map((category) {
-                            return DropdownMenuItem<String>(
-                              value: category['name'],
-                              child: Row(
-                                children: [
-                                  Icon(category['icon'], size: 20),
-                                  const SizedBox(width: 10),
-                                  Text(category['name']),
-                                ],
-                              ),
-                            );
-                          }).toList(),
+                      items: categories.map((category) {
+                        return DropdownMenuItem<String>(
+                          value: category['name'],
+                          child: Row(
+                            children: [
+                              Icon(category['icon'], size: 20),
+                              const SizedBox(width: 10),
+                              Text(category['name']),
+                            ],
+                          ),
+                        );
+                      }).toList(),
                       onChanged: (value) {
                         setState(() {
                           selectedCategory = value;
@@ -201,6 +265,7 @@ class _AddStoresState extends State<AddStores> {
 
                     // Store address field
                     TextFormField(
+                      controller: _storeAddressController,
                       decoration: InputDecoration(
                         labelText: "Store Address",
                         hintText: "Enter store address",
@@ -211,11 +276,18 @@ class _AddStoresState extends State<AddStores> {
                         filled: true,
                         fillColor: Colors.grey[50],
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter store address';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
 
                     // Contact number field
                     TextFormField(
+                      controller: _contactNumberController,
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
                         labelText: "Contact Number",
@@ -227,6 +299,15 @@ class _AddStoresState extends State<AddStores> {
                         filled: true,
                         fillColor: Colors.grey[50],
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter contact number';
+                        }
+                        if (!RegExp(r'^\+?\d{10,15}$').hasMatch(value)) {
+                          return 'Please enter a valid phone number';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 24),
 
@@ -235,17 +316,7 @@ class _AddStoresState extends State<AddStores> {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            // Process data
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Store added successfully!'),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                          }
-                        },
+                        onPressed: _isLoading ? null : _addStore,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Theme.of(context).primaryColor,
                           foregroundColor: Colors.white,
@@ -254,13 +325,15 @@ class _AddStoresState extends State<AddStores> {
                           ),
                           elevation: 2,
                         ),
-                        child: const Text(
-                          "ADD STORE",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child: _isLoading
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text(
+                                "ADD STORE",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -282,26 +355,25 @@ class _AddStoresState extends State<AddStores> {
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children:
-                          categories.map((category) {
-                            return Container(
-                              margin: const EdgeInsets.only(right: 10),
-                              child: Chip(
-                                avatar: Icon(
-                                  category['icon'],
-                                  size: 18,
-                                  color: Theme.of(context).primaryColor,
-                                ),
-                                label: Text(category['name']),
-                                backgroundColor: Colors.white,
-                                side: BorderSide(color: Colors.grey[300]!),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                      children: categories.map((category) {
+                        return Container(
+                          margin: const EdgeInsets.only(right: 10),
+                          child: Chip(
+                            avatar: Icon(
+                              category['icon'],
+                              size: 18,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                            label: Text(category['name']),
+                            backgroundColor: Colors.white,
+                            side: BorderSide(color: Colors.grey[300]!),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ),
                 ],
@@ -357,9 +429,7 @@ class _AddStoresState extends State<AddStores> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).primaryColor.withOpacity(0.1),
+                              color: Theme.of(context).primaryColor.withOpacity(0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -425,12 +495,6 @@ class _AddStoresState extends State<AddStores> {
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: Theme.of(context).primaryColor,
-        tooltip: 'Quick Add Store',
-        child: const Icon(Icons.add),
       ),
     );
   }
