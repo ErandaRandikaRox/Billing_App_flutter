@@ -13,29 +13,70 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
+  bool _isLoading = false; // Added for loading state
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  @override
-  Widget build(BuildContext context) {
-    void signInwithEmailPassword(String email, password) async {
-      // get the auth services
-      final _authService = AuthService();
+  // Move signInwithEmailPassword outside build
+  Future<void> signInwithEmailPassword(String email, String password) async {
+    setState(() {
+      _isLoading = true;
+    });
 
-      // signin with email
-      try {
-        await _authService.signInwithEmailPassword(email, password);
-      }
-      // display an error
-      catch (e) {
-        showDialog(
-          context: context,
-          builder:
-              (context) => AlertDialog(title: Text("You are not registed")),
+    final authService = AuthService();
+    try {
+      await authService.signInwithEmailPassword(email, password);
+      // Navigate to MyNavigationbar on success
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MyNavigationbar()),
         );
       }
-    }
+    } catch (e) {
+      // Improved error handling
+      String errorMessage = 'An error occurred. Please try again.';
+      if (e.toString().contains('user-not-found')) {
+        errorMessage = 'No user found with this email.';
+      } else if (e.toString().contains('wrong-password')) {
+        errorMessage = 'Incorrect password.';
+      } else if (e.toString().contains('invalid-email')) {
+        errorMessage = 'Invalid email format.';
+      }
 
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Sign In Failed'),
+            content: Text(errorMessage),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -65,28 +106,23 @@ class _LoginState extends State<Login> {
                       color: Colors.white,
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
                   const Text(
-                    "Welcome Back",
+                    'Welcome Back',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
-
                   const SizedBox(height: 8),
-
                   Text(
-                    "Sign in to continue with Billing App",
+                    'Sign in to continue with Billing App',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.white.withOpacity(0.8),
                     ),
                   ),
-
                   const SizedBox(height: 40),
 
                   // Login Form
@@ -110,7 +146,7 @@ class _LoginState extends State<Login> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            "Email / Username",
+                            'Email / Username',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
@@ -120,7 +156,7 @@ class _LoginState extends State<Login> {
                           TextFormField(
                             controller: _emailController,
                             decoration: InputDecoration(
-                              hintText: "Enter your email or username",
+                              hintText: 'Enter your email or username',
                               prefixIcon: const Icon(Icons.person_outline),
                               filled: true,
                               fillColor: Colors.grey.shade100,
@@ -135,16 +171,14 @@ class _LoginState extends State<Login> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Please enter your username';
+                                return 'Please enter your email';
                               }
                               return null;
                             },
                           ),
-
                           const SizedBox(height: 24),
-
                           const Text(
-                            "Password",
+                            'Password',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
@@ -155,7 +189,7 @@ class _LoginState extends State<Login> {
                             controller: _passwordController,
                             obscureText: !_isPasswordVisible,
                             decoration: InputDecoration(
-                              hintText: "Enter your password",
+                              hintText: 'Enter your password',
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 icon: Icon(
@@ -187,40 +221,34 @@ class _LoginState extends State<Login> {
                               return null;
                             },
                           ),
-
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
                               onPressed: () {
-                                // Handle forgot password
+                                // TODO: Implement forgot password functionality
                               },
                               child: const Text(
-                                "Forgot Password?",
+                                'Forgot Password?',
                                 style: TextStyle(color: Colors.blueGrey),
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 16),
-
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: () {
-                                if (_formKey.currentState!.validate()) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) => const MyNavigationbar(),
-                                    ),
-                                  );
-                                }
-                              },
+                              onPressed: _isLoading
+                                  ? null // Disable button during loading
+                                  : () {
+                                      if (_formKey.currentState!.validate()) {
+                                        signInwithEmailPassword(
+                                          _emailController.text,
+                                          _passwordController.text,
+                                        );
+                                      }
+                                    },
                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
                                 backgroundColor: Colors.blueGrey.shade700,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
@@ -228,20 +256,23 @@ class _LoginState extends State<Login> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: const Text(
-                                "Sign In",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              child: _isLoading
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                    )
+                                  : const Text(
+                                      'Sign In',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 24),
 
                   // Registration prompt
@@ -249,18 +280,20 @@ class _LoginState extends State<Login> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Don't have an account?",
+                        "Don't have an account? ",
                         style: TextStyle(color: Colors.white.withOpacity(0.8)),
                       ),
                       TextButton(
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => Register()),
+                            MaterialPageRoute(
+                              builder: (context) => const Register(),
+                            ),
                           );
                         },
                         child: const Text(
-                          "Sign Up",
+                          'Sign Up',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
