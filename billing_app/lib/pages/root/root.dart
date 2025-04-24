@@ -172,10 +172,7 @@ class _MakeRootPageState extends State<MakeRootPage> {
               text: "Add Items",
               icon: Icons.add,
               onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertBoxItemAdd(),
-                );
+                showDialog(context: context, builder: (context)=> AlertBoxItemAdd());
               },
               isGradient: true,
             ),
