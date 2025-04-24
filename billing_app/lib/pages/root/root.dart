@@ -1,3 +1,4 @@
+import 'package:billing_app/pages/root/widgets/alert_box_item_add.dart';
 import 'package:billing_app/widgets/custom_app_bar.dart';
 import 'package:billing_app/widgets/custom_button.dart';
 import 'package:billing_app/widgets/custom_drawer.dart';
@@ -170,7 +171,9 @@ class _MakeRootPageState extends State<MakeRootPage> {
             CustomButton(
               text: "Add Items",
               icon: Icons.add,
-              onPressed: onAddPressed,
+              onPressed: () {
+                showDialog(context: context, builder: (context)=> AlertBoxItemAdd());
+              },
               isGradient: true,
             ),
           ],
