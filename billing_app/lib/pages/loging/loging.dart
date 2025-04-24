@@ -1,4 +1,5 @@
 import 'package:billing_app/navigation_bar.dart';
+import 'package:billing_app/pages/forget_password/forget_password.dart';
 import 'package:billing_app/pages/sigup/signup.dart';
 import 'package:billing_app/services/auth/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -47,16 +48,17 @@ class _LoginState extends State<Login> {
       if (mounted) {
         showDialog(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Sign In Failed'),
-            content: Text(errorMessage),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
+          builder:
+              (context) => AlertDialog(
+                title: const Text('Sign In Failed'),
+                content: Text(errorMessage),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('OK'),
+                  ),
+                ],
               ),
-            ],
-          ),
         );
       }
     } finally {
@@ -225,7 +227,12 @@ class _LoginState extends State<Login> {
                             alignment: Alignment.centerRight,
                             child: TextButton(
                               onPressed: () {
-                                // TODO: Implement forgot password functionality
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ForgetPassword(),
+                                  ),
+                                );
                               },
                               child: const Text(
                                 'Forgot Password?',
@@ -237,18 +244,21 @@ class _LoginState extends State<Login> {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: _isLoading
-                                  ? null // Disable button during loading
-                                  : () {
-                                      if (_formKey.currentState!.validate()) {
-                                        signInwithEmailPassword(
-                                          _emailController.text,
-                                          _passwordController.text,
-                                        );
-                                      }
-                                    },
+                              onPressed:
+                                  _isLoading
+                                      ? null // Disable button during loading
+                                      : () {
+                                        if (_formKey.currentState!.validate()) {
+                                          signInwithEmailPassword(
+                                            _emailController.text,
+                                            _passwordController.text,
+                                          );
+                                        }
+                                      },
                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 backgroundColor: Colors.blueGrey.shade700,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
@@ -256,17 +266,18 @@ class _LoginState extends State<Login> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: _isLoading
-                                  ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
-                                  : const Text(
-                                      'Sign In',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
+                              child:
+                                  _isLoading
+                                      ? const CircularProgressIndicator(
+                                        color: Colors.white,
+                                      )
+                                      : const Text(
+                                        'Sign In',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    ),
                             ),
                           ),
                         ],
