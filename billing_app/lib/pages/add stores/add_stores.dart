@@ -426,12 +426,6 @@ class _AddStoresState extends State<AddStores> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: Theme.of(context).primaryColor,
-        tooltip: 'Quick Add Store',
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }

@@ -1,8 +1,12 @@
-import 'package:billing_app/pages/loging/loging.dart';
+import 'package:billing_app/firebase_options.dart';
+import 'package:billing_app/services/auth/auth_gate.dart';
 import 'package:billing_app/theme/theme_data.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -17,7 +21,7 @@ class MyApp extends StatelessWidget {
       theme: MyAppTheme.lightTheme,
       darkTheme: MyAppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      home: Login(),
+      home: AuthGate(),
     );
   }
 }

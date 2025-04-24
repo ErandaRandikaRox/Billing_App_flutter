@@ -3,10 +3,16 @@ import 'package:billing_app/pages/credit_bill/credit_bill_page.dart';
 import 'package:billing_app/pages/pinned_bill/pinnied_bill.dart';
 import 'package:billing_app/pages/salary/salary_page.dart';
 import 'package:billing_app/pages/setting/setting.dart';
+import 'package:billing_app/services/auth/auth_service.dart';
 import 'package:flutter/material.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
+
+  void logout() {
+    final authservices = AuthService();
+    authservices.logout();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,7 +136,7 @@ class CustomDrawer extends StatelessWidget {
                   ),
                   onTap: () {
                     // Handle logout
-                    Navigator.pop(context);
+                    logout();
                   },
                 ),
               ],
