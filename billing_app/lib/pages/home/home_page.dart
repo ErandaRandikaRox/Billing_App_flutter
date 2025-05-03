@@ -1,3 +1,4 @@
+
 import 'package:billing_app/pages/home/widgets/drop_down_text.dart';
 import 'package:billing_app/pages/home/widgets/get_the_username.dart';
 import 'package:billing_app/pages/root/root.dart';
@@ -51,12 +52,14 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  // Fetch username using getname.dart
+  // Fetch username using get_the_username.dart
   Future<void> _fetchUsername() async {
     String username = await fetchUsername(_authService);
-    setState(() {
-      _username = username;
-    });
+    if (mounted) { // Check if widget is still mounted
+      setState(() {
+        _username = username;
+      });
+    }
   }
 
   @override
@@ -122,16 +125,17 @@ class _HomePageState extends State<HomePage> {
             Text(
               'Welcome ${_username ?? 'Loading...'}!',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.blue.shade800,
-              ),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue.shade800,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
               DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now()),
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -146,28 +150,7 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            CustomTextField(
-              controller: _dateController,
-              labelText: 'Date',
-              hintText: 'dd/mm/yyyy',
-              prefixIcon: Icons.calendar_today,
-              readOnly: true,
-              onTap: () async {
-                DateTime? pickedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2101),
-                );
-                if (pickedDate != null) {
-                  setState(() {
-                    _dateController.text = DateFormat(
-                      'dd/MM/yyyy',
-                    ).format(pickedDate);
-                  });
-                }
-              },
-            ),
+            
             const SizedBox(height: 16),
             CustomDropdown(
               label: 'Route',
@@ -208,9 +191,9 @@ class _HomePageState extends State<HomePage> {
             Text(
               'Current Stock',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.blue.shade800,
-              ),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue.shade800,
+                  ),
             ),
             const SizedBox(height: 16),
             const CustomTable(),
