@@ -1,9 +1,13 @@
+
 import 'package:billing_app/widgets/custom_app_bar.dart';
 import 'package:billing_app/widgets/custom_button.dart';
 import 'package:billing_app/widgets/custom_drawer.dart';
 import 'package:billing_app/widgets/custom_input_field.dart';
 import 'package:billing_app/widgets/custom_table.dart';
 import 'package:flutter/material.dart';
+import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
+import 'package:billing_app/pages/home/home_page.dart';
+import 'package:billing_app/pages/profile/profile.dart';
 
 class MakeRootPage extends StatefulWidget {
   const MakeRootPage({super.key});
@@ -18,6 +22,7 @@ class _MakeRootPageState extends State<MakeRootPage> {
   final TextEditingController _discountController = TextEditingController();
   final TextEditingController _taxController = TextEditingController();
   final TextEditingController _netAmountController = TextEditingController();
+  int _currentNavIndex = 1; // Track bottom navigation bar index (1 for Add Bill)
 
   List<String> stores = [];
 
@@ -82,30 +87,82 @@ class _MakeRootPageState extends State<MakeRootPage> {
             children: [
               // Store Name Section
               _buildStoreNameSection(),
-
               const SizedBox(height: 20),
-
               // Goods Section
               _buildSectionCard(
                 title: "Goods Section",
                 table: CustomTable(),
                 onAddPressed: _onAdd,
               ),
-
               const SizedBox(height: 20),
-
               // Return Section
               _buildSectionCard(
                 title: "Return Section",
                 table: CustomTable(),
                 onAddPressed: _onAdd,
               ),
-
               const SizedBox(height: 20),
-
               // Bill Details Section
               _buildBillDetailsCard(),
+              const SizedBox(height: 16), // Padding to avoid overlap
             ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 10,
+              offset: const Offset(0, -3),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: SalomonBottomBar(
+              currentIndex: _currentNavIndex,
+              onTap: (index) {
+                setState(() {
+                  _currentNavIndex = index;
+                });
+                if (index == 0) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomePage()),
+                  );
+                } else if (index == 2) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ProfilePage()),
+                  );
+                }
+              },
+              items: [
+                SalomonBottomBarItem(
+                  icon: const Icon(Icons.home_rounded),
+                  title: const Text("Home"),
+                  selectedColor: Colors.deepPurple,
+                  unselectedColor: Colors.grey[400],
+                ),
+                SalomonBottomBarItem(
+                  icon: const Icon(Icons.add_circle_rounded),
+                  title: const Text("Add Bill"),
+                  selectedColor: Colors.deepPurple,
+                  unselectedColor: Colors.grey[400],
+                ),
+                SalomonBottomBarItem(
+                  icon: const Icon(Icons.person_rounded),
+                  title: const Text("Profile"),
+                  selectedColor: Colors.deepPurple,
+                  unselectedColor: Colors.grey[400],
+                ),
+              ],
+              margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            ),
           ),
         ),
       ),

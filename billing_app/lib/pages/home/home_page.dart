@@ -1,6 +1,6 @@
-
 import 'package:billing_app/pages/home/widgets/drop_down_text.dart';
 import 'package:billing_app/pages/home/widgets/get_the_username.dart';
+import 'package:billing_app/pages/profile/profile.dart';
 import 'package:billing_app/pages/root/root.dart';
 import 'package:billing_app/pages/setting/setting.dart';
 import 'package:billing_app/services/auth/auth_service.dart';
@@ -10,6 +10,7 @@ import 'package:billing_app/widgets/custom_table.dart';
 import 'package:billing_app/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,6 +24,7 @@ class _HomePageState extends State<HomePage> {
   String? _selectedRoute;
   String? _selectedVehicle;
   String? _username; // Store the fetched username
+  int _currentNavIndex = 0; // Track bottom navigation bar index
 
   // Lists for dropdowns
   final List<String> _routes = [
@@ -55,7 +57,8 @@ class _HomePageState extends State<HomePage> {
   // Fetch username using get_the_username.dart
   Future<void> _fetchUsername() async {
     String username = await fetchUsername(_authService);
-    if (mounted) { // Check if widget is still mounted
+    if (mounted) {
+      // Check if widget is still mounted
       setState(() {
         _username = username;
       });
@@ -64,50 +67,108 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: CustomAppBar(
-          title: "Home",
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SettingsPage()),
-                );
-              },
-            ),
-          ],
-          showDrawerIcons: true,
-          showBackButton: false,
+    return Scaffold(
+      appBar: CustomAppBar(
+        title: "Home",
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsPage()),
+              );
+            },
+          ),
+        ],
+        showDrawerIcons: true,
+        showBackButton: false,
+      ),
+      drawer: const CustomDrawer(),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.blue.shade50, Colors.white],
+          ),
         ),
-        drawer: const CustomDrawer(),
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.blue.shade50, Colors.white],
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildWelcomeSection(),
+                const SizedBox(height: 20),
+                _buildSelectionSection(),
+                const SizedBox(height: 20),
+                _buildStockSection(),
+                const SizedBox(height: 20),
+                _buildControlButtons(),
+                const SizedBox(height: 16), // Padding to avoid overlap
+              ],
             ),
           ),
-          child: SafeArea(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildWelcomeSection(),
-                    const SizedBox(height: 20),
-                    _buildSelectionSection(),
-                    const SizedBox(height: 20),
-                    _buildStockSection(),
-                    const SizedBox(height: 20),
-                    _buildControlButtons(),
-                  ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 10,
+              offset: const Offset(0, -3),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: SalomonBottomBar(
+              currentIndex: _currentNavIndex,
+              onTap: (index) {
+                setState(() {
+                  _currentNavIndex = index;
+                });
+                if (index == 1) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MakeRootPage(),
+                    ),
+                  );
+                } else if (index == 2) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfilePage(),
+                    ),
+                  );
+                }
+              },
+              items: [
+                SalomonBottomBarItem(
+                  icon: const Icon(Icons.home_rounded),
+                  title: const Text("Home"),
+                  selectedColor: Colors.deepPurple,
+                  unselectedColor: Colors.grey[400],
                 ),
-              ),
+                SalomonBottomBarItem(
+                  icon: const Icon(Icons.add_circle_rounded),
+                  title: const Text("Add Bill"),
+                  selectedColor: Colors.deepPurple,
+                  unselectedColor: Colors.grey[400],
+                ),
+                SalomonBottomBarItem(
+                  icon: const Icon(Icons.person_rounded),
+                  title: const Text("Profile"),
+                  selectedColor: Colors.deepPurple,
+                  unselectedColor: Colors.grey[400],
+                ),
+              ],
+              margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             ),
           ),
         ),
@@ -125,17 +186,16 @@ class _HomePageState extends State<HomePage> {
             Text(
               'Welcome ${_username ?? 'Loading...'}!',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade800,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade800,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now()),
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: Colors.grey.shade600),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -150,7 +210,28 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            
+            CustomTextField(
+              controller: _dateController,
+              labelText: 'Date',
+              hintText: 'dd/mm/yyyy',
+              prefixIcon: Icons.calendar_today,
+              readOnly: true,
+              onTap: () async {
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2101),
+                );
+                if (pickedDate != null) {
+                  setState(() {
+                    _dateController.text = DateFormat(
+                      'dd/MM/yyyy',
+                    ).format(pickedDate);
+                  });
+                }
+              },
+            ),
             const SizedBox(height: 16),
             CustomDropdown(
               label: 'Route',
@@ -191,9 +272,9 @@ class _HomePageState extends State<HomePage> {
             Text(
               'Current Stock',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade800,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade800,
+              ),
             ),
             const SizedBox(height: 16),
             const CustomTable(),
