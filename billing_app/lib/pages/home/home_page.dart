@@ -210,29 +210,6 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            CustomTextField(
-              controller: _dateController,
-              labelText: 'Date',
-              hintText: 'dd/mm/yyyy',
-              prefixIcon: Icons.calendar_today,
-              readOnly: true,
-              onTap: () async {
-                DateTime? pickedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2101),
-                );
-                if (pickedDate != null) {
-                  setState(() {
-                    _dateController.text = DateFormat(
-                      'dd/MM/yyyy',
-                    ).format(pickedDate);
-                  });
-                }
-              },
-            ),
-            const SizedBox(height: 16),
             CustomDropdown(
               label: 'Route',
               hint: 'Select a route',
