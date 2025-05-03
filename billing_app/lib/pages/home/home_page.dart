@@ -1,6 +1,8 @@
 import 'package:billing_app/pages/home/widgets/drop_down_text.dart';
+import 'package:billing_app/pages/home/widgets/get_the_username.dart';
 import 'package:billing_app/pages/root/root.dart';
 import 'package:billing_app/pages/setting/setting.dart';
+import 'package:billing_app/services/auth/auth_service.dart';
 import 'package:billing_app/widgets/custom_drawer.dart';
 import 'package:billing_app/widgets/drop_down.dart';
 import 'package:billing_app/widgets/custom_table.dart';
@@ -19,6 +21,7 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _dateController = TextEditingController();
   String? _selectedRoute;
   String? _selectedVehicle;
+  String? _username; // Store the fetched username
 
   // Lists for dropdowns
   final List<String> _routes = [
@@ -30,17 +33,30 @@ class _HomePageState extends State<HomePage> {
 
   final List<String> _vehicles = ["QK 6220", "QU 6220", "325-33234", "542159"];
 
+  // Instance for Auth
+  final AuthService _authService = AuthService();
+
   @override
   void initState() {
     super.initState();
     // Set current date by default
     _dateController.text = DateFormat('dd/MM/yyyy').format(DateTime.now());
+    // Fetch username
+    _fetchUsername();
   }
 
   @override
   void dispose() {
     _dateController.dispose();
     super.dispose();
+  }
+
+  // Fetch username using getname.dart
+  Future<void> _fetchUsername() async {
+    String username = await fetchUsername(_authService);
+    setState(() {
+      _username = username;
+    });
   }
 
   @override
@@ -104,7 +120,7 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             Text(
-              'Welcome Charaka!',
+              'Welcome ${_username ?? 'Loading...'}!',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Colors.blue.shade800,
