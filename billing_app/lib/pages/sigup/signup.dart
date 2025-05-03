@@ -1,3 +1,4 @@
+
 import 'package:billing_app/pages/loging/loging.dart';
 import 'package:billing_app/services/auth/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,11 +21,12 @@ class _RegisterState extends State<Register> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
-  
+  final TextEditingController _usernameController = TextEditingController(); // Added username controller
+
   // Firebase direct instance as fallback
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   late final AuthService _authService;
-  
+
   @override
   void initState() {
     super.initState();
@@ -35,12 +37,13 @@ class _RegisterState extends State<Register> {
       // Fallback handled in register method
     }
   }
-  
+
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _usernameController.dispose(); // Dispose username controller
     super.dispose();
   }
 
@@ -59,7 +62,7 @@ class _RegisterState extends State<Register> {
     // Check passwords match
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
-    
+
     if (password != confirmPassword) {
       _showErrorDialog("Password Error", "Passwords do not match.");
       return;
@@ -72,28 +75,29 @@ class _RegisterState extends State<Register> {
 
     try {
       final email = _emailController.text.trim();
-      
+      final username = _usernameController.text.trim();
+
       // Try using AuthService first, fallback to direct Firebase Auth if needed
       try {
-        debugPrint("Attempting to register with email: $email");
-        
-        // Try AuthService implementation first
-        await _authService.signUpwithEmailPassword(email, password);
+        debugPrint("Attempting to register with email: $email and username: $username");
+
+        // Use AuthService with username
+        await _authService.signUpwithEmailPassword(email, password, username);
       } catch (authServiceError) {
         // If AuthService fails, try direct Firebase method as fallback
         debugPrint("AuthService failed: $authServiceError. Trying direct Firebase method.");
-        
+
         // Direct Firebase Auth implementation as fallback
         await _firebaseAuth.createUserWithEmailAndPassword(
           email: email,
           password: password,
         );
       }
-      
+
       debugPrint("Registration successful!");
-      
+
       if (!mounted) return;
-      
+
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -102,7 +106,7 @@ class _RegisterState extends State<Register> {
           duration: Duration(seconds: 2),
         ),
       );
-      
+
       // Wait a moment before navigating
       Future.delayed(const Duration(milliseconds: 1500), () {
         if (!mounted) return;
@@ -111,11 +115,10 @@ class _RegisterState extends State<Register> {
           MaterialPageRoute(builder: (context) => const Login()),
         );
       });
-      
     } on FirebaseAuthException catch (e) {
       debugPrint("Firebase Auth Error: ${e.code} - ${e.message}");
       String errorMessage;
-      
+
       switch (e.code) {
         case 'email-already-in-use':
           errorMessage = 'This email is already registered.';
@@ -135,14 +138,13 @@ class _RegisterState extends State<Register> {
         default:
           errorMessage = 'Registration failed: ${e.message ?? "Unknown error"}';
       }
-      
+
       _showErrorDialog("Registration Error", errorMessage);
-      
     } catch (e) {
       debugPrint("Unexpected error during registration: $e");
       _showErrorDialog(
-        "Registration Failed", 
-        "An unexpected error occurred. Please try again later."
+        "Registration Failed",
+        "An unexpected error occurred. Please try again later.",
       );
     } finally {
       // Always reset loading state if component is still mounted
@@ -153,10 +155,10 @@ class _RegisterState extends State<Register> {
       }
     }
   }
-  
+
   void _showErrorDialog(String title, String message) {
     if (!mounted) return;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -248,6 +250,31 @@ class _RegisterState extends State<Register> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          const Text("Username", style: TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _usernameController,
+                            enabled: !_isLoading,
+                            decoration: InputDecoration(
+                              hintText: "Enter your username",
+                              prefixIcon: const Icon(Icons.person_outline),
+                              filled: true,
+                              fillColor: Colors.grey.shade100,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter a username';
+                              } else if (value.length < 3) {
+                                return 'Username must be at least 3 characters long';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 20),
                           const Text("Email", style: TextStyle(fontWeight: FontWeight.bold)),
                           const SizedBox(height: 8),
                           TextFormField(
@@ -288,11 +315,13 @@ class _RegisterState extends State<Register> {
                                 icon: Icon(
                                   _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
                                 ),
-                                onPressed: _isLoading ? null : () {
-                                  setState(() {
-                                    _isPasswordVisible = !_isPasswordVisible;
-                                  });
-                                },
+                                onPressed: _isLoading
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          _isPasswordVisible = !_isPasswordVisible;
+                                        });
+                                      },
                               ),
                               filled: true,
                               fillColor: Colors.grey.shade100,
@@ -324,11 +353,13 @@ class _RegisterState extends State<Register> {
                                 icon: Icon(
                                   _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
                                 ),
-                                onPressed: _isLoading ? null : () {
-                                  setState(() {
-                                    _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-                                  });
-                                },
+                                onPressed: _isLoading
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                                        });
+                                      },
                               ),
                               filled: true,
                               fillColor: Colors.grey.shade100,
@@ -351,11 +382,13 @@ class _RegisterState extends State<Register> {
                             children: [
                               Checkbox(
                                 value: _agreedToTerms,
-                                onChanged: _isLoading ? null : (value) {
-                                  setState(() {
-                                    _agreedToTerms = value ?? false;
-                                  });
-                                },
+                                onChanged: _isLoading
+                                    ? null
+                                    : (value) {
+                                        setState(() {
+                                          _agreedToTerms = value ?? false;
+                                        });
+                                      },
                                 activeColor: Colors.blueGrey.shade700,
                               ),
                               Expanded(
@@ -381,19 +414,19 @@ class _RegisterState extends State<Register> {
                                 ),
                                 disabledBackgroundColor: Colors.blueGrey.shade300,
                               ),
-                              child: _isLoading 
-                                ? const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2.0,
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2.0,
+                                      ),
+                                    )
+                                  : const Text(
+                                      "Create Account",
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                     ),
-                                  )
-                                : const Text(
-                                    "Create Account",
-                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                  ),
                             ),
                           ),
                         ],
@@ -409,12 +442,14 @@ class _RegisterState extends State<Register> {
                         style: TextStyle(color: Colors.white.withOpacity(0.8)),
                       ),
                       TextButton(
-                        onPressed: _isLoading ? null : () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const Login()),
-                          );
-                        },
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const Login()),
+                                );
+                              },
                         child: const Text(
                           "Sign In",
                           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
