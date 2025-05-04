@@ -2,6 +2,7 @@ import 'package:billing_app/services/data/stores_model.dart';
 import 'package:billing_app/widgets/custom_app_bar.dart';
 import 'package:billing_app/widgets/custom_drawer.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // For date formatting (retained for potential use)
 
 class AddStores extends StatefulWidget {
   const AddStores({super.key});
@@ -15,24 +16,7 @@ class _AddStoresState extends State<AddStores> {
   final _storeNameController = TextEditingController();
   final _storeAddressController = TextEditingController();
   final _contactNumberController = TextEditingController();
-  String? selectedCategory;
   bool _isLoading = false;
-
-  // Sample store categories
-  final List<Map<String, dynamic>> categories = [
-    {'name': 'Grocery', 'icon': Icons.shopping_basket},
-    {'name': 'Restaurant', 'icon': Icons.restaurant},
-    {'name': 'Electronics', 'icon': Icons.devices},
-    {'name': 'Pharmacy', 'icon': Icons.local_pharmacy},
-    {'name': 'Clothing', 'icon': Icons.checkroom},
-  ];
-
-  // Sample recently added stores (replace with Firestore data)
-  final List<Map<String, dynamic>> recentStores = [
-    {'name': 'Central Market', 'category': 'Grocery', 'visits': 8},
-    {'name': 'Tech Galaxy', 'category': 'Electronics', 'visits': 3},
-    {'name': 'Health Plus', 'category': 'Pharmacy', 'visits': 5},
-  ];
 
   // Firestore service instance
   final FirestoreServices _db = FirestoreServices();
@@ -53,7 +37,7 @@ class _AddStoresState extends State<AddStores> {
       try {
         await _db.saveStoreToDatabase(
           _storeNameController.text,
-          selectedCategory!,
+          'General', // Default category
           _storeAddressController.text.isEmpty
               ? null
               : _storeAddressController.text,
@@ -62,20 +46,24 @@ class _AddStoresState extends State<AddStores> {
               : _contactNumberController.text,
         );
         if (mounted) {
+          // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Store added successfully!'),
               backgroundColor: Colors.green,
             ),
           );
-          // Clear form
-          _storeNameController.clear();
-          _storeAddressController.clear();
-          _contactNumberController.clear();
+          // Clear text fields
           setState(() {
-            selectedCategory = null;
+            print('Clearing text fields');
+            _storeNameController.clear();
+            _storeAddressController.clear();
+            _contactNumberController.clear();
+            _formKey.currentState!.reset();
+            print(
+              'Text fields cleared: name=${_storeNameController.text}, address=${_storeAddressController.text}, contact=${_contactNumberController.text}',
+            );
           });
-          _formKey.currentState!.reset();
         }
       } catch (e) {
         if (mounted) {
@@ -90,11 +78,132 @@ class _AddStoresState extends State<AddStores> {
         if (mounted) {
           setState(() {
             _isLoading = false;
+            print('Loading state reset: _isLoading=$_isLoading');
           });
         }
       }
+    } else {
+      print('Form validation failed');
     }
   }
+
+  // Retained for potential future use
+  /*
+  Future<void> _deleteStore(String storeId) async {
+    try {
+      await _db.deleteStore(storeId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Store deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting store: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+  */
+
+  // Retained for potential future use
+  /*
+  Future<void> _showEditStoreDialog(Map<String, dynamic> store) async {
+    final nameController = TextEditingController(text: store['name']);
+    final addressController = TextEditingController(text: store['address'] ?? '');
+    final contactController = TextEditingController(text: store['contact'] ?? '');
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Store'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Store Name'),
+              ),
+              TextField(
+                controller: addressController,
+                decoration: const InputDecoration(labelText: 'Address'),
+              ),
+              TextField(
+                controller: contactController,
+                decoration: const InputDecoration(labelText: 'Contact Number'),
+                keyboardType: TextInputType.phone,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('SAVE'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      try {
+        await _db.updateStore(
+          store['id'],
+          nameController.text,
+          store['category'] ?? 'General',
+          addressController.text.isEmpty ? null : addressController.text,
+          contactController.text.isEmpty ? null : contactController.text,
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Store updated successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error updating store: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+
+    nameController.dispose();
+    addressController.dispose();
+    contactController.dispose();
+  }
+  */
+
+  // Retained for potential future use
+  /*
+  String _formatTimestamp(dynamic timestamp) {
+    if (timestamp == null) return 'Unknown date';
+    try {
+      final DateTime dateTime = timestamp.toDate();
+      return DateFormat('MMM dd, yyyy').format(dateTime);
+    } catch (e) {
+      return 'Invalid date';
+    }
+  }
+  */
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +212,12 @@ class _AddStoresState extends State<AddStores> {
       appBar: CustomAppBar(
         title: "Add Stores",
         actions: [
-          IconButton(icon: const Icon(Icons.filter_list), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: () {
+              // Filter functionality could be added here
+            },
+          ),
         ],
         showDrawerIcons: false,
         showBackButton: true,
@@ -158,7 +272,9 @@ class _AddStoresState extends State<AddStores> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor.withOpacity(0.1),
+                          color: Theme.of(
+                            context,
+                          ).primaryColor.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -224,51 +340,12 @@ class _AddStoresState extends State<AddStores> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Store category dropdown
-                    DropdownButtonFormField<String>(
-                      value: selectedCategory,
-                      decoration: InputDecoration(
-                        labelText: "Store Category",
-                        hintText: "Select category",
-                        prefixIcon: const Icon(Icons.category),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                      ),
-                      items: categories.map((category) {
-                        return DropdownMenuItem<String>(
-                          value: category['name'],
-                          child: Row(
-                            children: [
-                              Icon(category['icon'], size: 20),
-                              const SizedBox(width: 10),
-                              Text(category['name']),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          selectedCategory = value;
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please select a category';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
                     // Store address field
                     TextFormField(
                       controller: _storeAddressController,
                       decoration: InputDecoration(
                         labelText: "Store Address",
-                        hintText: "Enter store address",
+                        hintText: "Enter store address (optional)",
                         prefixIcon: const Icon(Icons.location_on),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -276,12 +353,6 @@ class _AddStoresState extends State<AddStores> {
                         filled: true,
                         fillColor: Colors.grey[50],
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter store address';
-                        }
-                        return null;
-                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -291,7 +362,7 @@ class _AddStoresState extends State<AddStores> {
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
                         labelText: "Contact Number",
-                        hintText: "Enter contact number",
+                        hintText: "Enter contact number (optional)",
                         prefixIcon: const Icon(Icons.phone),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -300,11 +371,10 @@ class _AddStoresState extends State<AddStores> {
                         fillColor: Colors.grey[50],
                       ),
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter contact number';
-                        }
-                        if (!RegExp(r'^\+?\d{10,15}$').hasMatch(value)) {
-                          return 'Please enter a valid phone number';
+                        if (value != null && value.isNotEmpty) {
+                          if (!RegExp(r'^\+?\d{10,15}$').hasMatch(value)) {
+                            return 'Please enter a valid phone number';
+                          }
                         }
                         return null;
                       },
@@ -325,172 +395,22 @@ class _AddStoresState extends State<AddStores> {
                           ),
                           elevation: 2,
                         ),
-                        child: _isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text(
-                                "ADD STORE",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Category chips
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Store Categories",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: categories.map((category) {
-                        return Container(
-                          margin: const EdgeInsets.only(right: 10),
-                          child: Chip(
-                            avatar: Icon(
-                              category['icon'],
-                              size: 18,
-                              color: Theme.of(context).primaryColor,
-                            ),
-                            label: Text(category['name']),
-                            backgroundColor: Colors.white,
-                            side: BorderSide(color: Colors.grey[300]!),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Recent stores section
-            Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Recently Added Stores",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {},
-                        child: const Text("View All"),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  ...recentStores.map((store) {
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[200]!),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).primaryColor.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.store,
-                              color: Theme.of(context).primaryColor,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  store['name'],
-                                  style: const TextStyle(
+                        child:
+                            _isLoading
+                                ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                                : const Text(
+                                  "ADD STORE",
+                                  style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                Text(
-                                  store['category'],
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            children: [
-                              Text(
-                                "${store['visits']} visits",
-                                style: TextStyle(
-                                  color: Theme.of(context).primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.edit,
-                                    size: 18,
-                                    color: Colors.grey[600],
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    Icons.delete_outline,
-                                    size: 18,
-                                    color: Colors.red[300],
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
                       ),
-                    );
-                  }).toList(),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

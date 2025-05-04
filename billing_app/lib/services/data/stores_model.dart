@@ -27,7 +27,7 @@ class FirestoreServices {
   }
 
   // Fetch recent stores (optional, for recent stores section)
-  Future<List<Map<String, dynamic>>> getRecentStores() async {
+  Future<List<Map<String, dynamic>>> getRecentStores({required int limit}) async {
     try {
       QuerySnapshot query = await stores
           .orderBy('date', descending: true)
@@ -42,4 +42,8 @@ class FirestoreServices {
       throw Exception('Error fetching stores: $e');
     }
   }
+
+  updateStore(store, String text, param2, String? s, String? t) {}
+
+  deleteStore(String storeId) {}
 }
