@@ -1,15 +1,17 @@
+import 'package:billing_app/pages/home/stock_table.dart';
 import 'package:billing_app/pages/home/widgets/drop_down_text.dart';
 import 'package:billing_app/pages/home/widgets/get_the_username.dart';
 import 'package:billing_app/pages/profile/profile.dart';
 import 'package:billing_app/pages/root/root.dart';
 import 'package:billing_app/pages/setting/setting.dart';
 import 'package:billing_app/services/auth/auth_service.dart';
+import 'package:billing_app/services/data/goods.dart';
 import 'package:billing_app/widgets/custom_drawer.dart';
 import 'package:billing_app/widgets/drop_down.dart';
-import 'package:billing_app/widgets/custom_table.dart';
 import 'package:billing_app/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 
 class HomePage extends StatefulWidget {
@@ -21,6 +23,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _productNameController = TextEditingController();
+  final TextEditingController _quantityController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
   String? _selectedRoute;
   String? _selectedVehicle;
   String? _username; // Store the fetched username
@@ -51,6 +56,9 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _dateController.dispose();
+    _productNameController.dispose();
+    _quantityController.dispose();
+    _priceController.dispose();
     super.dispose();
   }
 
@@ -62,6 +70,24 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _username = username;
       });
+    }
+  }
+
+  // Add new stock item
+  void _addStock() {
+    final goods = Provider.of<Goods>(context, listen: false);
+    if (_productNameController.text.isNotEmpty &&
+        _quantityController.text.isNotEmpty &&
+        _priceController.text.isNotEmpty) {
+      final newStock = StockModel(
+        int.parse(_quantityController.text),
+        double.parse(_priceController.text),
+        productName: _productNameController.text,
+      );
+      goods.addStock(newStock);
+      _productNameController.clear();
+      _quantityController.clear();
+      _priceController.clear();
     }
   }
 
@@ -247,6 +273,61 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             Text(
+              'Add New Stock',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade800,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _productNameController,
+              decoration: const InputDecoration(
+                labelText: 'Product Name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _quantityController,
+              decoration: const InputDecoration(
+                labelText: 'Quantity',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _priceController,
+              decoration: const InputDecoration(
+                labelText: 'Price',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity, // Makes button stretch to full width
+              child: ElevatedButton(
+                onPressed: _addStock,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade600,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  elevation: 5,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Add Stock',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
               'Current Stock',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
@@ -254,7 +335,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 16),
-            const CustomTable(),
+            const StockTable(),
           ],
         ),
       ),
@@ -283,7 +364,7 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => MakeRootPage()),
+                MaterialPageRoute(builder: (context) => const MakeRootPage()),
               );
             },
             icon: const Icon(Icons.play_arrow),

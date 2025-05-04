@@ -3,7 +3,6 @@ import 'dart:math';
 
 // StockModel class as provided
 class StockModel {
-  
   final String productName;
   final int quantity;
   final double price;
@@ -14,19 +13,9 @@ class StockModel {
 // Goods class to manage a list of StockModel items
 class Goods with ChangeNotifier {
   // List initialized with 6 provided items and 4 random spice items
-  final List<StockModel> _list = [
-    StockModel(100, 1000, productName: "Kasaya"),
-    StockModel(200, 1000, productName: "Chilly paste"),
-    StockModel(200, 1000, productName: "Chilly"),
-    StockModel(200, 1000, productName: "Curry powder"),
-    StockModel(200, 1000, productName: "Tea"),
-    StockModel(100, 1000, productName: "Vanilla"), // Corrected typo
- 
-  ];
-
+  final List<StockModel> _list = [];
 
   List<StockModel> get stocks => _list;
-
 
   void addStock(StockModel stock) {
     _list.add(stock);
