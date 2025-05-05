@@ -14,7 +14,7 @@ class CustomDropdown extends StatelessWidget {
     required this.hint,
     required this.value,
     required this.items,
-    required this.onChanged,
+    required this.onChanged, required bool enabled,
   });
 
   @override
