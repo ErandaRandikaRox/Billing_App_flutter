@@ -1,66 +1,71 @@
-
 import 'package:billing_app/widgets/custom_app_bar.dart';
 import 'package:billing_app/widgets/custom_button.dart';
 import 'package:billing_app/widgets/custom_drawer.dart';
-import 'package:billing_app/widgets/custom_input_field.dart';
 import 'package:billing_app/widgets/custom_table.dart';
 import 'package:flutter/material.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
-import 'package:billing_app/pages/home/home_page.dart';
-import 'package:billing_app/pages/profile/profile.dart';
+import 'bill_controller.dart';
+import 'bill_model.dart';
 
-class MakeRootPage extends StatefulWidget {
+class MakeRootPage extends StatelessWidget {
   const MakeRootPage({super.key});
 
   @override
-  State<MakeRootPage> createState() => _MakeRootPageState();
+  Widget build(BuildContext context) {
+    final model = BillModel();
+    final controller = BillController(model, context);
+    final storeNameController = TextEditingController();
+    final billAmountController = TextEditingController();
+    final discountController = TextEditingController();
+    final taxController = TextEditingController();
+    final netAmountController = TextEditingController();
+
+    return _MakeRootView(
+      model: model,
+      controller: controller,
+      storeNameController: storeNameController,
+      billAmountController: billAmountController,
+      discountController: discountController,
+      taxController: taxController,
+      netAmountController: netAmountController,
+    );
+  }
 }
 
-class _MakeRootPageState extends State<MakeRootPage> {
-  final TextEditingController _storeNameController = TextEditingController();
-  final TextEditingController _billAmountController = TextEditingController();
-  final TextEditingController _discountController = TextEditingController();
-  final TextEditingController _taxController = TextEditingController();
-  final TextEditingController _netAmountController = TextEditingController();
-  int _currentNavIndex = 1; // Track bottom navigation bar index (1 for Add Bill)
+class _MakeRootView extends StatefulWidget {
+  final BillModel model;
+  final BillController controller;
+  final TextEditingController storeNameController;
+  final TextEditingController billAmountController;
+  final TextEditingController discountController;
+  final TextEditingController taxController;
+  final TextEditingController netAmountController;
 
-  List<String> stores = [];
+  const _MakeRootView({
+    required this.model,
+    required this.controller,
+    required this.storeNameController,
+    required this.billAmountController,
+    required this.discountController,
+    required this.taxController,
+    required this.netAmountController,
+  });
+
+  @override
+  _MakeRootViewState createState() => _MakeRootViewState();
+}
+
+class _MakeRootViewState extends State<_MakeRootView> {
+  int _currentNavIndex = 1;
 
   @override
   void dispose() {
-    _storeNameController.dispose();
-    _billAmountController.dispose();
-    _discountController.dispose();
-    _taxController.dispose();
-    _netAmountController.dispose();
+    widget.storeNameController.dispose();
+    widget.billAmountController.dispose();
+    widget.discountController.dispose();
+    widget.taxController.dispose();
+    widget.netAmountController.dispose();
     super.dispose();
-  }
-
-  void _addStore(String value) {
-    final storeName = value.trim();
-    if (storeName.isNotEmpty) {
-      setState(() {
-        stores.add(storeName);
-        _storeNameController.clear();
-      });
-    } else {
-      _showSnackBar('Please enter a store name', isError: true);
-    }
-  }
-
-  void _onAdd() {
-    _showSnackBar('Add items button pressed');
-  }
-
-  void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.redAccent : Colors.deepPurple,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
   }
 
   @override
@@ -72,7 +77,7 @@ class _MakeRootPageState extends State<MakeRootPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.push_pin_sharp, color: Colors.black),
-            onPressed: () => _showSnackBar('Bill Saved'),
+            onPressed: widget.controller.onSaveBill,
           ),
         ],
         showDrawerIcons: true,
@@ -85,87 +90,27 @@ class _MakeRootPageState extends State<MakeRootPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Store Name Section
               _buildStoreNameSection(),
               const SizedBox(height: 20),
-              // Goods Section
               _buildSectionCard(
                 title: "Goods Section",
                 table: CustomTable(),
-                onAddPressed: _onAdd,
+                onAddPressed: widget.controller.onAddItems,
               ),
               const SizedBox(height: 20),
-              // Return Section
               _buildSectionCard(
                 title: "Return Section",
                 table: CustomTable(),
-                onAddPressed: _onAdd,
+                onAddPressed: widget.controller.onAddItems,
               ),
               const SizedBox(height: 20),
-              // Bill Details Section
               _buildBillDetailsCard(),
-              const SizedBox(height: 16), // Padding to avoid overlap
+              const SizedBox(height: 16),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-              offset: const Offset(0, -3),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: SalomonBottomBar(
-              currentIndex: _currentNavIndex,
-              onTap: (index) {
-                setState(() {
-                  _currentNavIndex = index;
-                });
-                if (index == 0) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HomePage()),
-                  );
-                } else if (index == 2) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ProfilePage()),
-                  );
-                }
-              },
-              items: [
-                SalomonBottomBarItem(
-                  icon: const Icon(Icons.home_rounded),
-                  title: const Text("Home"),
-                  selectedColor: Colors.deepPurple,
-                  unselectedColor: Colors.grey[400],
-                ),
-                SalomonBottomBarItem(
-                  icon: const Icon(Icons.add_circle_rounded),
-                  title: const Text("Add Bill"),
-                  selectedColor: Colors.deepPurple,
-                  unselectedColor: Colors.grey[400],
-                ),
-                SalomonBottomBarItem(
-                  icon: const Icon(Icons.person_rounded),
-                  title: const Text("Profile"),
-                  selectedColor: Colors.deepPurple,
-                  unselectedColor: Colors.grey[400],
-                ),
-              ],
-              margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            ),
-          ),
-        ),
-      ),
+      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
@@ -188,9 +133,21 @@ class _MakeRootPageState extends State<MakeRootPage> {
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: customInput(
-                storeNameController: _storeNameController,
-                onSubmitted: _addStore,
+              child: TextField(
+                controller: widget.storeNameController,
+                decoration: InputDecoration(
+                  hintText: "Enter store name",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                onSubmitted: (value) {
+                  widget.controller.addStore(value);
+                  setState(() {}); // Update UI to reflect new store
+                },
               ),
             ),
           ],
@@ -257,33 +214,33 @@ class _MakeRootPageState extends State<MakeRootPage> {
             const SizedBox(height: 16),
             _buildDetailRow(
               label: "Bill Amount",
-              controller: _billAmountController,
+              controller: widget.billAmountController,
               hintText: "Enter bill amount",
             ),
             const SizedBox(height: 10),
             _buildDetailRow(
               label: "Return",
-              controller: _discountController,
+              controller: widget.discountController,
               hintText: "Return data",
             ),
             const SizedBox(height: 10),
             _buildDetailRow(
               label: "Cash",
-              controller: _taxController,
+              controller: widget.taxController,
               hintText: "Cash",
             ),
             const SizedBox(height: 10),
             _buildDetailRow(
-              label: "Creadit",
-              controller: _netAmountController,
-              hintText: "Creadit",
+              label: "Credit",
+              controller: widget.netAmountController,
+              hintText: "Credit",
               isReadOnly: true,
             ),
             const SizedBox(height: 16),
             CustomButton(
               text: "Save Bill",
               icon: Icons.save,
-              onPressed: () {},
+              onPressed: widget.controller.onSaveBill,
               isGradient: true,
             ),
           ],
@@ -338,6 +295,56 @@ class _MakeRootPageState extends State<MakeRootPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: const Offset(0, -3),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: SalomonBottomBar(
+            currentIndex: _currentNavIndex,
+            onTap: (index) {
+              setState(() {
+                _currentNavIndex = index;
+              });
+              widget.controller.navigateToPage(index);
+            },
+            items: [
+              SalomonBottomBarItem(
+                icon: const Icon(Icons.home_rounded),
+                title: const Text("Home"),
+                selectedColor: Colors.deepPurple,
+                unselectedColor: Colors.grey[400],
+              ),
+              SalomonBottomBarItem(
+                icon: const Icon(Icons.add_circle_rounded),
+                title: const Text("Add Bill"),
+                selectedColor: Colors.deepPurple,
+                unselectedColor: Colors.grey[400],
+              ),
+              SalomonBottomBarItem(
+                icon: const Icon(Icons.person_rounded),
+                title: const Text("Profile"),
+                selectedColor: Colors.deepPurple,
+                unselectedColor: Colors.grey[400],
+              ),
+            ],
+            margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          ),
+        ),
+      ),
     );
   }
 }
