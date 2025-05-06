@@ -1,14 +1,10 @@
-import 'package:billing_app/services/data/goods.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:billing_app/services/data/goods.dart';
 
 class FirebaseStockService {
-  // Reference to top-level collections
-  final CollectionReference _tripsCollection =
-      FirebaseFirestore.instance.collection('trips');
-  final CollectionReference _stocksCollection =
-      FirebaseFirestore.instance.collection('stocks');
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Saves stock data for a new trip and returns the trip ID
+  // Save stock data for a new trip
   Future<String> saveStockDataForTrip({
     required List<StockModel> stockItems,
     required String route,
@@ -17,198 +13,149 @@ class FirebaseStockService {
     required String username,
   }) async {
     try {
-      // Validate inputs
-      if (stockItems.isEmpty) {
-        throw Exception('Stock items list cannot be empty');
-      }
-      if (route.isEmpty) {
-        throw Exception('Route cannot be empty');
-      }
-      if (vehicle.isEmpty) {
-        throw Exception('Vehicle cannot be empty');
-      }
-      if (date.isEmpty) {
-        throw Exception('Date cannot be empty');
-      }
-      if (username.isEmpty) {
-        throw Exception('Username cannot be empty');
-      }
-
-      // Validate each stock item
-      for (var item in stockItems) {
-        if (item.productName.isEmpty) {
-          throw Exception('Product name cannot be empty');
-        }
-        if (item.quantity <= 0) {
-          throw Exception('Quantity must be greater than 0');
-        }
-        if (item.price <= 0) {
-          throw Exception('Price must be greater than 0');
-        }
-      }
-
-      print(
-        'DEBUG: Saving trip data: route=$route, vehicle=$vehicle, date=$date, username=$username',
-      );
-      print('DEBUG: Stock items to save: ${stockItems.length} items');
-
       // Create a new trip document
-      final tripDocRef = await _tripsCollection.add({
+      final tripRef = _firestore.collection('trips').doc();
+      final String tripId = tripRef.id;
+      
+      // Prepare trip data
+      final tripData = {
+        'id': tripId,
         'route': route,
         'vehicle': vehicle,
         'date': date,
-        'startTime': FieldValue.serverTimestamp(),
-        'endTime': null,
-        'status': 'active',
-        'createdBy': username,
-        'totalItems': stockItems.length,
-        'totalValue': stockItems.fold(
-          0.0,
-          (sum, item) => sum + (item.quantity * item.price),
-        ),
-      });
-
-      print('DEBUG: Trip document created with ID: ${tripDocRef.id}');
-
-      // Add stock items using batch
-      final batch = FirebaseFirestore.instance.batch();
-      int batchCount = 0;
-
-      for (var stockItem in stockItems) {
-        print('DEBUG: Processing stock item: ${stockItem.productName}');
-        final newStockRef = _stocksCollection.doc();
-        batch.set(newStockRef, {
-          'tripId': tripDocRef.id,
-          'productName': stockItem.productName,
-          'quantity': stockItem.quantity,
-          'price': stockItem.price,
-          'totalPrice': stockItem.quantity * stockItem.price,
-          'createdAt': FieldValue.serverTimestamp(),
-          'sold': 0,
-          'remaining': stockItem.quantity,
+        'username': username,
+        'timestamp': FieldValue.serverTimestamp(),
+        'status': 'active', // To indicate this is an active trip
+      };
+      
+      // Create a batch write for atomicity
+      final batch = _firestore.batch();
+      
+      // Add the main trip document
+      batch.set(tripRef, tripData);
+      
+      // Add each stock item as a document in a subcollection
+      for (var stock in stockItems) {
+        final stockDoc = tripRef.collection('stocks').doc();
+        batch.set(stockDoc, {
+          'productName': stock.productName,
+          'quantity': stock.quantity,
+          'price': stock.price,
+          'totalValue': stock.quantity * stock.price,
+          'timestamp': FieldValue.serverTimestamp(),
         });
-        batchCount++;
-
-        // Commit batch if nearing Firebase limit (500 operations)
-        if (batchCount >= 400) {
-          await batch.commit();
-          print('DEBUG: Batch committed with $batchCount operations');
-          batchCount = 0;
-        }
       }
-
-      // Commit any remaining operations
-      if (batchCount > 0) {
-        await batch.commit();
-        print('DEBUG: Final batch committed with $batchCount operations');
-      }
-
-      // Verify the save
-      final savedTrip = await _tripsCollection.doc(tripDocRef.id).get();
-      if (!savedTrip.exists) {
-        throw Exception('Trip document was not saved correctly');
-      }
-      print('DEBUG: Trip data verified in Firestore');
-
-      final savedStocks = await _stocksCollection
-          .where('tripId', isEqualTo: tripDocRef.id)
-          .get();
-      if (savedStocks.docs.length != stockItems.length) {
-        throw Exception('Not all stock items were saved correctly');
-      }
-      print('DEBUG: Stock data verified in Firestore');
-
-      return tripDocRef.id;
-    } catch (e, stackTrace) {
-      print('ERROR: Failed to save trip data: $e');
-      print('ERROR: Stack trace: $stackTrace');
+      
+      // Commit the batch
+      await batch.commit();
+      
+      print('Trip data saved successfully with ID: $tripId');
+      return tripId;
+    } catch (e) {
+      print('Error saving trip data: $e');
       throw Exception('Failed to save trip data: $e');
     }
   }
 
-  /// Get all active trips
+  // Get active trips for the current user
   Future<List<Map<String, dynamic>>> getActiveTrips() async {
     try {
-      print('DEBUG: Fetching active trips');
-      final QuerySnapshot snapshot =
-          await _tripsCollection.where('status', isEqualTo: 'active').get();
+      final querySnapshot = await _firestore
+          .collection('trips')
+          .where('status', isEqualTo: 'active')
+          .orderBy('timestamp', descending: true)
+          .get();
 
-      print('DEBUG: Found ${snapshot.docs.length} active trips');
-      return snapshot.docs
-          .map((doc) => {'id': doc.id, ...doc.data() as Map<String, dynamic>})
+      return querySnapshot.docs
+          .map((doc) => doc.data() as Map<String, dynamic>)
           .toList();
-    } catch (e, stackTrace) {
-      print('ERROR: Error fetching active trips: $e');
-      print('ERROR: Stack trace: $stackTrace');
-      throw Exception('Failed to fetch active trips: $e');
+    } catch (e) {
+      print('Error getting active trips: $e');
+      return [];
     }
   }
 
-  /// Complete a trip by updating its status and end time
+  // Mark a trip as completed
   Future<void> completeTrip(String tripId) async {
     try {
-      print('DEBUG: Completing trip: $tripId');
-      await _tripsCollection.doc(tripId).update({
+      await _firestore.collection('trips').doc(tripId).update({
         'status': 'completed',
         'endTime': FieldValue.serverTimestamp(),
       });
-      print('DEBUG: Trip $tripId completed successfully');
-    } catch (e, stackTrace) {
-      print('ERROR: Error completing trip: $e');
-      print('ERROR: Stack trace: $stackTrace');
+      print('Trip marked as completed: $tripId');
+    } catch (e) {
+      print('Error completing trip: $e');
       throw Exception('Failed to complete trip: $e');
     }
   }
 
-  /// Get all stock items for a specific trip
-  Future<List<Map<String, dynamic>>> getStockItemsForTrip(String tripId) async {
+  // Get stock items for a specific trip
+  Future<List<StockModel>> getStocksForTrip(String tripId) async {
     try {
-      print('DEBUG: Fetching stock items for trip: $tripId');
-      final QuerySnapshot snapshot =
-          await _stocksCollection.where('tripId', isEqualTo: tripId).get();
+      final stocksSnapshot = await _firestore
+          .collection('trips')
+          .doc(tripId)
+          .collection('stocks')
+          .get();
 
-      print('DEBUG: Found ${snapshot.docs.length} stock items');
-      return snapshot.docs
-          .map((doc) => {'id': doc.id, ...doc.data() as Map<String, dynamic>})
-          .toList();
-    } catch (e, stackTrace) {
-      print('ERROR: Error fetching stock items: $e');
-      print('ERROR: Stack trace: $stackTrace');
-      throw Exception('Failed to fetch stock items: $e');
+      return stocksSnapshot.docs.map((doc) {
+        final data = doc.data();
+        return StockModel(
+          data['quantity'],
+          data['price'],
+          productName: data['productName'],
+        );
+      }).toList();
+    } catch (e) {
+      print('Error getting stocks for trip: $e');
+      return [];
     }
   }
 
-  /// Update sold quantity for a stock item
-  Future<void> updateStockSoldQuantity({
-    required String stockId,
-    required int soldQuantity,
-  }) async {
+  // Get trip history
+  Future<List<Map<String, dynamic>>> getTripHistory() async {
     try {
-      print('DEBUG: Updating stock: $stockId, sold: $soldQuantity');
-      final stockDoc = await _stocksCollection.doc(stockId).get();
-      if (!stockDoc.exists) {
-        throw Exception('Stock item not found');
+      final querySnapshot = await _firestore
+          .collection('trips')
+          .orderBy('timestamp', descending: true)
+          .limit(50) // Limit to prevent retrieving too much data
+          .get();
+
+      return querySnapshot.docs
+          .map((doc) => doc.data() as Map<String, dynamic>)
+          .toList();
+    } catch (e) {
+      print('Error getting trip history: $e');
+      return [];
+    }
+  }
+
+  // Get trip details including stocks
+  Future<Map<String, dynamic>?> getTripDetails(String tripId) async {
+    try {
+      final tripDoc = await _firestore.collection('trips').doc(tripId).get();
+      
+      if (!tripDoc.exists) {
+        return null;
       }
-      final stockData = stockDoc.data() as Map<String, dynamic>;
-
-      final int currentQuantity = stockData['quantity'] ?? 0;
-      final int newSold = soldQuantity;
-      final int newRemaining = currentQuantity - newSold;
-
-      if (newRemaining < 0) {
-        throw Exception('Cannot sell more than available quantity');
-      }
-
-      await _stocksCollection.doc(stockId).update({
-        'sold': newSold,
-        'remaining': newRemaining,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      print('DEBUG: Stock $stockId updated: sold=$newSold, remaining=$newRemaining');
-    } catch (e, stackTrace) {
-      print('ERROR: Error updating stock sold quantity: $e');
-      print('ERROR: Stack trace: $stackTrace');
-      throw Exception('Failed to update stock: $e');
+      
+      final tripData = tripDoc.data() as Map<String, dynamic>;
+      
+      // Get stocks for this trip
+      final stocks = await getStocksForTrip(tripId);
+      
+      // Add stocks to trip data
+      tripData['stocks'] = stocks.map((stock) => {
+        'productName': stock.productName,
+        'quantity': stock.quantity,
+        'price': stock.price,
+        'totalValue': stock.quantity * stock.price,
+      }).toList();
+      
+      return tripData;
+    } catch (e) {
+      print('Error getting trip details: $e');
+      return null;
     }
   }
 }

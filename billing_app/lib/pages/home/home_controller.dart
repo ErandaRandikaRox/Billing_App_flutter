@@ -7,11 +7,13 @@ import 'package:billing_app/services/data/stock.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Make sure this import is in your pubspec.yaml
 
 class HomeController {
   final HomeModel model = HomeModel();
   final AuthService authService = AuthService();
   final FirebaseStockService stockService = FirebaseStockService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Controllers for text fields
   final TextEditingController dateController = TextEditingController();
@@ -86,7 +88,7 @@ class HomeController {
     }
   }
 
-  // Start a new trip
+  // Start a new trip and store data in database
   Future<void> startTrip(BuildContext context) async {
     final goods = Provider.of<Goods>(context, listen: false);
 
@@ -101,15 +103,46 @@ class HomeController {
     try {
       model.setLoading(true);
 
-      await stockService.saveStockDataForTrip(
-        stockItems: goods.stocks,
-        route: model.selectedRoute!,
-        vehicle: model.selectedVehicle!,
-        date: dateController.text,
-        username: model.username!,
-      );
-
-      await checkForActiveTrips();
+      // Create trip document in Firestore
+      final tripRef = _firestore.collection('trips').doc();
+      final String tripId = tripRef.id;
+      
+      // Prepare trip data
+      final tripData = {
+        'id': tripId,
+        'route': model.selectedRoute,
+        'vehicle': model.selectedVehicle,
+        'date': dateController.text,
+        'username': model.username,
+        'timestamp': FieldValue.serverTimestamp(),
+        'status': 'active', // To indicate this is an active trip
+      };
+      
+      // Create batch write for better transaction handling
+      final batch = _firestore.batch();
+      
+      // Add the trip document
+      batch.set(tripRef, tripData);
+      
+      // Add each stock item as a separate document in a subcollection
+      for (var stock in goods.stocks) {
+        final stockDoc = tripRef.collection('stocks').doc();
+        batch.set(stockDoc, {
+          'productName': stock.productName,
+          'quantity': stock.quantity,
+          'price': stock.price,
+          'totalValue': stock.quantity * stock.price,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      }
+      
+      // Commit the batch write
+      await batch.commit();
+      
+      // Set current trip ID in the model
+      model.setCurrentTripId(tripId);
+      
+      // Show success message
       _showSuccessSnackBar(context, 'Trip started successfully');
 
       // Navigate to MakeRootPage after successful trip start
@@ -135,7 +168,12 @@ class HomeController {
 
     try {
       model.setLoading(true);
-      await stockService.completeTrip(model.currentTripId!);
+      
+      // Update the trip document to mark it as completed
+      await _firestore.collection('trips').doc(model.currentTripId).update({
+        'status': 'completed',
+        'endTime': FieldValue.serverTimestamp(),
+      });
 
       model.setCurrentTripId(null);
       _showSuccessSnackBar(context, 'Trip completed successfully');
