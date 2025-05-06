@@ -1,5 +1,4 @@
 import 'package:billing_app/pages/home/stock_table.dart';
-import 'package:billing_app/pages/home/widgets/drop_down_text.dart';
 import 'package:billing_app/pages/home/widgets/get_the_username.dart';
 import 'package:billing_app/pages/profile/profile.dart';
 import 'package:billing_app/pages/root/root.dart';
@@ -72,7 +71,6 @@ class _HomePageState extends State<HomePage> {
   Future<void> _fetchUsername() async {
     String username = await fetchUsername(_authService);
     if (mounted) {
-      // Check if widget is still mounted
       setState(() {
         _username = username;
       });
@@ -82,15 +80,16 @@ class _HomePageState extends State<HomePage> {
   // Check if there are any active trips
   Future<void> _checkForActiveTrips() async {
     try {
-      setState(() {
-        _isLoading = true;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = true;
+        });
+      }
 
       final activeTrips = await _stockService.getActiveTrips();
-      if (activeTrips.isNotEmpty) {
+      if (activeTrips.isNotEmpty && mounted) {
         setState(() {
           _currentTripId = activeTrips[0]['id'];
-          // You can also populate route and vehicle from active trip
           _selectedRoute = activeTrips[0]['route'];
           _selectedVehicle = activeTrips[0]['vehicle'];
         });
@@ -98,9 +97,11 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       _showErrorSnackBar('Error checking active trips: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -122,53 +123,60 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Start a new trip and save stock data to Firebase
   Future<void> _startTrip() async {
     final goods = Provider.of<Goods>(context, listen: false);
 
-    // Validate required fields
     if (_selectedRoute == null || _selectedVehicle == null) {
       _showErrorSnackBar('Please select a route and vehicle');
       return;
     }
-
     if (goods.stocks.isEmpty) {
       _showErrorSnackBar('Please add at least one stock item');
       return;
     }
+    if (_username == null) {
+      _showErrorSnackBar('Username not loaded yet');
+      return;
+    }
 
     try {
-      setState(() {
-        _isLoading = true;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = true;
+        });
+      }
 
-      // Save trip data to Firebase
+      print(
+        'Saving trip: route=$_selectedRoute, vehicle=$_selectedVehicle, date=${_dateController.text}, username=$_username',
+      );
       await _stockService.saveStockDataForTrip(
         stockItems: goods.stocks,
         route: _selectedRoute!,
         vehicle: _selectedVehicle!,
+        date: _dateController.text,
+        username: _username!,
       );
 
-      // On success, navigate to root page
+      await _checkForActiveTrips();
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
+      }
 
-        _showSuccessSnackBar('Trip started successfully');
-
-        // Refresh active trips to get the new trip ID
-        await _checkForActiveTrips();
-
+      _showSuccessSnackBar('Trip started successfully');
+      if (mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const MakeRootPage()),
         );
       }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
       _showErrorSnackBar('Failed to start trip: $e');
     }
   }
@@ -181,9 +189,11 @@ class _HomePageState extends State<HomePage> {
     }
 
     try {
-      setState(() {
-        _isLoading = true;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = true;
+        });
+      }
 
       await _stockService.completeTrip(_currentTripId!);
 
@@ -199,9 +209,11 @@ class _HomePageState extends State<HomePage> {
         goods.clearStocks();
       }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
       _showErrorSnackBar('Failed to end trip: $e');
     }
   }
@@ -252,36 +264,35 @@ class _HomePageState extends State<HomePage> {
         showBackButton: false,
       ),
       drawer: const CustomDrawer(),
-      body:
-          _isLoading
-              ? _buildLoadingView()
-              : Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Colors.blue.shade50, Colors.white],
-                  ),
+      body: _isLoading
+          ? _buildLoadingView()
+          : Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Colors.blue.shade50, Colors.white],
                 ),
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildWelcomeSection(),
-                        const SizedBox(height: 20),
-                        _buildSelectionSection(),
-                        const SizedBox(height: 20),
-                        _buildStockSection(),
-                        const SizedBox(height: 20),
-                        _buildControlButtons(),
-                        const SizedBox(height: 16), // Padding to avoid overlap
-                      ],
-                    ),
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildWelcomeSection(),
+                      const SizedBox(height: 20),
+                      _buildSelectionSection(),
+                      const SizedBox(height: 20),
+                      _buildStockSection(),
+                      const SizedBox(height: 20),
+                      _buildControlButtons(),
+                      const SizedBox(height: 16), // Padding to avoid overlap
+                    ],
                   ),
                 ),
               ),
+            ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -377,9 +388,9 @@ class _HomePageState extends State<HomePage> {
                 Text(
                   'Welcome ${_username ?? 'Loading...'}!',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade800,
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade800,
+                      ),
                 ),
               ],
             ),
@@ -394,9 +405,10 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(width: 8),
                 Text(
                   DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now()),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(color: Colors.grey.shade600),
                 ),
               ],
             ),
@@ -445,9 +457,9 @@ class _HomePageState extends State<HomePage> {
                 Text(
                   'Trip Details',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade800,
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade800,
+                      ),
                 ),
               ],
             ),
@@ -498,9 +510,9 @@ class _HomePageState extends State<HomePage> {
                 Text(
                   'Add New Stock',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade800,
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade800,
+                      ),
                 ),
               ],
             ),
@@ -569,9 +581,9 @@ class _HomePageState extends State<HomePage> {
                 Text(
                   'Current Stock',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade800,
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade800,
+                      ),
                 ),
               ],
             ),

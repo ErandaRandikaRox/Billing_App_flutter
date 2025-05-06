@@ -10,7 +10,7 @@ class FirebaseStockService {
   Future<void> saveStockDataForTrip({
     required List<StockModel> stockItems, 
     required String route, 
-    required String vehicle
+    required String vehicle, required String date, required String username
   }) async {
     try {
       // Get current user ID
