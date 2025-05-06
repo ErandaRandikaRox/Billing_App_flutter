@@ -1,17 +1,13 @@
+import 'package:billing_app/pages/home/home_controller.dart';
 import 'package:billing_app/pages/home/stock_table.dart';
-import 'package:billing_app/pages/home/widgets/get_the_username.dart';
 import 'package:billing_app/pages/profile/profile.dart';
 import 'package:billing_app/pages/root/root.dart';
 import 'package:billing_app/pages/setting/setting.dart';
-import 'package:billing_app/services/auth/auth_service.dart';
-import 'package:billing_app/services/data/goods.dart';
-import 'package:billing_app/services/data/stock.dart';
+import 'package:billing_app/widgets/custom_app_bar.dart';
 import 'package:billing_app/widgets/custom_drawer.dart';
 import 'package:billing_app/widgets/drop_down.dart';
-import 'package:billing_app/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 
 class HomePage extends StatefulWidget {
@@ -22,226 +18,23 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final TextEditingController _dateController = TextEditingController();
-  final TextEditingController _productNameController = TextEditingController();
-  final TextEditingController _quantityController = TextEditingController();
-  final TextEditingController _priceController = TextEditingController();
-  String? _selectedRoute;
-  String? _selectedVehicle;
-  String? _username; // Store the fetched username
-  int _currentNavIndex = 0; // Track bottom navigation bar index
-  bool _isLoading = false; // Track loading state for async operations
-  String? _currentTripId; // Store the current active trip ID
-
-  // Services
-  final AuthService _authService = AuthService();
-  final FirebaseStockService _stockService = FirebaseStockService();
-
-  // Lists for dropdowns
-  final List<String> _routes = [
-    "Raththota",
-    "Alkaduwa",
-    "Kaludawela",
-    "Dabulla",
-  ];
-
-  final List<String> _vehicles = ["QK 6220", "QU 6220", "325-33234", "542159"];
+  final HomeController _controller = HomeController();
+  int _currentNavIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    // Set current date by default
-    _dateController.text = DateFormat('dd/MM/yyyy').format(DateTime.now());
-    // Fetch username
-    _fetchUsername();
-    // Check for active trips
-    _checkForActiveTrips();
+    _controller.init().then((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   @override
   void dispose() {
-    _dateController.dispose();
-    _productNameController.dispose();
-    _quantityController.dispose();
-    _priceController.dispose();
+    _controller.dispose();
     super.dispose();
-  }
-
-  // Fetch username using get_the_username.dart
-  Future<void> _fetchUsername() async {
-    String username = await fetchUsername(_authService);
-    if (mounted) {
-      setState(() {
-        _username = username;
-      });
-    }
-  }
-
-  // Check if there are any active trips
-  Future<void> _checkForActiveTrips() async {
-    try {
-      if (mounted) {
-        setState(() {
-          _isLoading = true;
-        });
-      }
-
-      final activeTrips = await _stockService.getActiveTrips();
-      if (activeTrips.isNotEmpty && mounted) {
-        setState(() {
-          _currentTripId = activeTrips[0]['id'];
-          _selectedRoute = activeTrips[0]['route'];
-          _selectedVehicle = activeTrips[0]['vehicle'];
-        });
-      }
-    } catch (e) {
-      _showErrorSnackBar('Error checking active trips: $e');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  // Add new stock item
-  void _addStock() {
-    final goods = Provider.of<Goods>(context, listen: false);
-    if (_productNameController.text.isNotEmpty &&
-        _quantityController.text.isNotEmpty &&
-        _priceController.text.isNotEmpty) {
-      final newStock = StockModel(
-        int.parse(_quantityController.text),
-        double.parse(_priceController.text),
-        productName: _productNameController.text,
-      );
-      goods.addStock(newStock);
-      _productNameController.clear();
-      _quantityController.clear();
-      _priceController.clear();
-    }
-  }
-
-  Future<void> _startTrip() async {
-    final goods = Provider.of<Goods>(context, listen: false);
-
-    if (_selectedRoute == null || _selectedVehicle == null) {
-      _showErrorSnackBar('Please select a route and vehicle');
-      return;
-    }
-    if (goods.stocks.isEmpty) {
-      _showErrorSnackBar('Please add at least one stock item');
-      return;
-    }
-    if (_username == null) {
-      _showErrorSnackBar('Username not loaded yet');
-      return;
-    }
-
-    try {
-      if (mounted) {
-        setState(() {
-          _isLoading = true;
-        });
-      }
-
-      print(
-        'Saving trip: route=$_selectedRoute, vehicle=$_selectedVehicle, date=${_dateController.text}, username=$_username',
-      );
-      await _stockService.saveStockDataForTrip(
-        stockItems: goods.stocks,
-        route: _selectedRoute!,
-        vehicle: _selectedVehicle!,
-        date: _dateController.text,
-        username: _username!,
-      );
-
-      await _checkForActiveTrips();
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-
-      _showSuccessSnackBar('Trip started successfully');
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const MakeRootPage()),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-      _showErrorSnackBar('Failed to start trip: $e');
-    }
-  }
-
-  // End an active trip
-  Future<void> _endTrip() async {
-    if (_currentTripId == null) {
-      _showErrorSnackBar('No active trip to end');
-      return;
-    }
-
-    try {
-      if (mounted) {
-        setState(() {
-          _isLoading = true;
-        });
-      }
-
-      await _stockService.completeTrip(_currentTripId!);
-
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _currentTripId = null;
-        });
-        _showSuccessSnackBar('Trip completed successfully');
-
-        // Clear current stock list
-        final goods = Provider.of<Goods>(context, listen: false);
-        goods.clearStocks();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-      _showErrorSnackBar('Failed to end trip: $e');
-    }
-  }
-
-  // Show success message
-  void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
-  }
-
-  // Show error message
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
   }
 
   @override
@@ -264,7 +57,7 @@ class _HomePageState extends State<HomePage> {
         showBackButton: false,
       ),
       drawer: const CustomDrawer(),
-      body: _isLoading
+      body: _controller.model.isLoading
           ? _buildLoadingView()
           : Container(
               decoration: BoxDecoration(
@@ -287,73 +80,13 @@ class _HomePageState extends State<HomePage> {
                       _buildStockSection(),
                       const SizedBox(height: 20),
                       _buildControlButtons(),
-                      const SizedBox(height: 16), // Padding to avoid overlap
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
               ),
             ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-              offset: const Offset(0, -3),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: SalomonBottomBar(
-              currentIndex: _currentNavIndex,
-              onTap: (index) {
-                setState(() {
-                  _currentNavIndex = index;
-                });
-                if (index == 1) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MakeRootPage(),
-                    ),
-                  );
-                } else if (index == 2) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ProfilePage(),
-                    ),
-                  );
-                }
-              },
-              items: [
-                SalomonBottomBarItem(
-                  icon: const Icon(Icons.home_rounded),
-                  title: const Text("Home"),
-                  selectedColor: Colors.deepPurple,
-                  unselectedColor: Colors.grey[400],
-                ),
-                SalomonBottomBarItem(
-                  icon: const Icon(Icons.add_circle_rounded),
-                  title: const Text("Add Bill"),
-                  selectedColor: Colors.deepPurple,
-                  unselectedColor: Colors.grey[400],
-                ),
-                SalomonBottomBarItem(
-                  icon: const Icon(Icons.person_rounded),
-                  title: const Text("Profile"),
-                  selectedColor: Colors.deepPurple,
-                  unselectedColor: Colors.grey[400],
-                ),
-              ],
-              margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            ),
-          ),
-        ),
-      ),
+      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
@@ -386,7 +119,7 @@ class _HomePageState extends State<HomePage> {
                 Icon(Icons.person, color: Colors.blue.shade800, size: 28),
                 const SizedBox(width: 8),
                 Text(
-                  'Welcome ${_username ?? 'Loading...'}!',
+                  'Welcome ${_controller.model.username ?? 'Loading...'}!',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.blue.shade800,
@@ -412,7 +145,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-            if (_currentTripId != null)
+            if (_controller.model.currentTripId != null)
               Container(
                 margin: const EdgeInsets.only(top: 12),
                 padding: const EdgeInsets.all(10),
@@ -467,12 +200,12 @@ class _HomePageState extends State<HomePage> {
             CustomDropdown(
               label: 'Route',
               hint: 'Select a route',
-              value: _selectedRoute,
-              items: _routes,
-              enabled: _currentTripId == null, // Disable if trip is active
+              value: _controller.model.selectedRoute,
+              items: _controller.model.routes,
+              enabled: _controller.model.currentTripId == null,
               onChanged: (value) {
                 setState(() {
-                  _selectedRoute = value;
+                  _controller.onRouteChanged(value);
                 });
               },
             ),
@@ -480,12 +213,12 @@ class _HomePageState extends State<HomePage> {
             CustomDropdown(
               label: 'Vehicle',
               hint: 'Select a vehicle',
-              value: _selectedVehicle,
-              items: _vehicles,
-              enabled: _currentTripId == null, // Disable if trip is active
+              value: _controller.model.selectedVehicle,
+              items: _controller.model.vehicles,
+              enabled: _controller.model.currentTripId == null,
               onChanged: (value) {
                 setState(() {
-                  _selectedVehicle = value;
+                  _controller.onVehicleChanged(value);
                 });
               },
             ),
@@ -518,7 +251,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 16),
             TextField(
-              controller: _productNameController,
+              controller: _controller.productNameController,
               decoration: InputDecoration(
                 labelText: 'Product Name',
                 border: OutlineInputBorder(
@@ -529,7 +262,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 16),
             TextField(
-              controller: _quantityController,
+              controller: _controller.quantityController,
               decoration: InputDecoration(
                 labelText: 'Quantity',
                 border: OutlineInputBorder(
@@ -541,7 +274,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 16),
             TextField(
-              controller: _priceController,
+              controller: _controller.priceController,
               decoration: InputDecoration(
                 labelText: 'Price',
                 border: OutlineInputBorder(
@@ -549,15 +282,13 @@ class _HomePageState extends State<HomePage> {
                 ),
                 prefixIcon: const Icon(Icons.attach_money),
               ),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
             ),
             const SizedBox(height: 16),
             SizedBox(
-              width: double.infinity, // Makes button stretch to full width
+              width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _addStock,
+                onPressed: () => _controller.addStock(context),
                 icon: const Icon(Icons.add_circle),
                 label: const Text(
                   'Add Stock',
@@ -600,7 +331,15 @@ class _HomePageState extends State<HomePage> {
       children: [
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: _currentTripId != null ? _endTrip : null,
+            onPressed: _controller.model.currentTripId != null
+                ? () {
+                    _controller.endTrip(context).then((_) {
+                      if (mounted) {
+                        setState(() {});
+                      }
+                    });
+                  }
+                : null,
             icon: const Icon(Icons.stop),
             label: const Text('End Trip'),
             style: ElevatedButton.styleFrom(
@@ -616,7 +355,9 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(width: 16),
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: _currentTripId == null ? _startTrip : null,
+            onPressed: _controller.model.currentTripId == null
+                ? () => _controller.startTrip(context)
+                : null,
             icon: const Icon(Icons.play_arrow),
             label: const Text('Start Trip'),
             style: ElevatedButton.styleFrom(
@@ -630,6 +371,70 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: const Offset(0, -3),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: SalomonBottomBar(
+            currentIndex: _currentNavIndex,
+            onTap: (index) {
+              setState(() {
+                _currentNavIndex = index;
+              });
+              if (index == 1) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MakeRootPage(),
+                  ),
+                );
+              } else if (index == 2) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProfilePage(),
+                  ),
+                );
+              }
+            },
+            items: [
+              SalomonBottomBarItem(
+                icon: const Icon(Icons.home_rounded),
+                title: const Text("Home"),
+                selectedColor: Colors.deepPurple,
+                unselectedColor: Colors.grey[400],
+              ),
+              SalomonBottomBarItem(
+                icon: const Icon(Icons.add_circle_rounded),
+                title: const Text("Add Bill"),
+                selectedColor: Colors.deepPurple,
+                unselectedColor: Colors.grey[400],
+              ),
+              SalomonBottomBarItem(
+                icon: const Icon(Icons.person_rounded),
+                title: const Text("Profile"),
+                selectedColor: Colors.deepPurple,
+                unselectedColor: Colors.grey[400],
+              ),
+            ],
+            margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          ),
+        ),
+      ),
     );
   }
 }
