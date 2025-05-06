@@ -4,8 +4,8 @@ import 'package:billing_app/widgets/custom_drawer.dart';
 import 'package:billing_app/widgets/custom_table.dart';
 import 'package:flutter/material.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
-import 'bill_controller.dart';
-import 'bill_model.dart';
+import 'root_controller.dart';
+import 'root_model.dart';
 
 class MakeRootPage extends StatelessWidget {
   const MakeRootPage({super.key});
@@ -59,6 +59,24 @@ class _MakeRootViewState extends State<_MakeRootView> {
   int _currentNavIndex = 1;
 
   @override
+  void initState() {
+    super.initState();
+    // Update netAmountController when model changes
+    widget.billAmountController.addListener(() {
+      widget.controller.updateBillDetails(billAmount: widget.billAmountController.text);
+      widget.netAmountController.text = widget.model.netAmount.toStringAsFixed(2);
+    });
+    widget.discountController.addListener(() {
+      widget.controller.updateBillDetails(discount: widget.discountController.text);
+      widget.netAmountController.text = widget.model.netAmount.toStringAsFixed(2);
+    });
+    widget.taxController.addListener(() {
+      widget.controller.updateBillDetails(tax: widget.taxController.text);
+      widget.netAmountController.text = widget.model.netAmount.toStringAsFixed(2);
+    });
+  }
+
+  @override
   void dispose() {
     widget.storeNameController.dispose();
     widget.billAmountController.dispose();
@@ -81,7 +99,7 @@ class _MakeRootViewState extends State<_MakeRootView> {
           ),
         ],
         showDrawerIcons: true,
-        showBackButton: false,
+        showBackButton: true,
       ),
       drawer: const CustomDrawer(),
       body: SingleChildScrollView(
