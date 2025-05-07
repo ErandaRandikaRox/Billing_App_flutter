@@ -1,3 +1,4 @@
+import 'package:billing_app/pages/root/widgets/store_search_bar.dart';
 import 'package:billing_app/widgets/custom_app_bar.dart';
 import 'package:billing_app/widgets/custom_button.dart';
 import 'package:billing_app/widgets/custom_drawer.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'root_controller.dart';
 import 'root_model.dart';
+
 
 class MakeRootPage extends StatelessWidget {
   const MakeRootPage({super.key});
@@ -61,7 +63,6 @@ class _MakeRootViewState extends State<_MakeRootView> {
   @override
   void initState() {
     super.initState();
-    // Update netAmountController when model changes
     widget.billAmountController.addListener(() {
       widget.controller.updateBillDetails(billAmount: widget.billAmountController.text);
       widget.netAmountController.text = widget.model.netAmount.toStringAsFixed(2);
@@ -138,35 +139,24 @@ class _MakeRootViewState extends State<_MakeRootView> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Store name",
+              "Store Name",
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextField(
-                controller: widget.storeNameController,
-                decoration: InputDecoration(
-                  hintText: "Enter store name",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-                onSubmitted: (value) {
-                  widget.controller.addStore(value);
-                  setState(() {}); // Update UI to reflect new store
-                },
-              ),
+            const SizedBox(height: 8),
+            StoreSearchBar(
+              controller: widget.storeNameController,
+              onStoreSelected: (storeName) {
+                widget.controller.addStore(storeName);
+                setState(() {});
+              },
             ),
           ],
         ),

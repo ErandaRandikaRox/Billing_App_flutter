@@ -15,15 +15,12 @@ class BillController {
   }
 
   void onAddItems() {
-    // Placeholder: Implement logic to add items to goods or returns
-    // Example: Show a dialog to input item details and update model
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Add Items functionality not implemented')),
     );
   }
 
   void onSaveBill() {
-    // Placeholder: Implement logic to save bill data (e.g., to Firestore)
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Bill saved successfully')),
     );

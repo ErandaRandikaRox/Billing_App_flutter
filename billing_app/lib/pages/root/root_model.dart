@@ -37,7 +37,6 @@ class BillModel {
   }
 
   void _updateBillAmount() {
-    // Calculate bill amount based on goods and returns
     billAmount = goods.fold(0.0, (sum, item) => sum + (item['amount'] ?? 0.0));
     billAmount -= returns.fold(0.0, (sum, item) => sum + (item['amount'] ?? 0.0));
     _updateNetAmount();
