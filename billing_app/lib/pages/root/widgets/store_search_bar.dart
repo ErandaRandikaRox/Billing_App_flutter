@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:billing_app/services/data/firestore_services.dart';
 import 'package:flutter/material.dart';
 
-
 class StoreSearchBar extends StatefulWidget {
   final TextEditingController controller;
   final Function(String) onStoreSelected;
@@ -45,9 +44,9 @@ class _StoreSearchBarState extends State<StoreSearchBar> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     });
   }
@@ -81,6 +80,17 @@ class _StoreSearchBarState extends State<StoreSearchBar> {
           const Padding(
             padding: EdgeInsets.all(8.0),
             child: Center(child: CircularProgressIndicator()),
+          ),
+        if (!_isLoading &&
+            _suggestions.isEmpty &&
+            widget.controller.text.isNotEmpty)
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              "Please add the store",
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
           ),
         if (_suggestions.isNotEmpty)
           Container(
