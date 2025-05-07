@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:billing_app/services/data/goods.dart';
+import 'package:billing_app/services/data/goods_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class FirebaseStockService {

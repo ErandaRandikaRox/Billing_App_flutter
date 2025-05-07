@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:billing_app/services/data/goods.dart';
+import 'package:billing_app/services/data/goods_provider.dart';
 
 // StockTable widget to display stock data from Goods provider
 class StockTable extends StatelessWidget {

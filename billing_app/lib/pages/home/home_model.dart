@@ -1,4 +1,4 @@
-import 'package:billing_app/services/data/goods.dart';
+import 'package:billing_app/services/data/goods_provider.dart';
 
 
 class HomeModel {

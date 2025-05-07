@@ -2,7 +2,7 @@ import 'package:billing_app/pages/home/home_model.dart';
 import 'package:billing_app/pages/home/widgets/get_the_username.dart' as get_the_username;
 import 'package:billing_app/pages/root/root.dart';
 import 'package:billing_app/services/auth/auth_service.dart';
-import 'package:billing_app/services/data/goods.dart';
+import 'package:billing_app/services/data/goods_provider.dart';
 import 'package:billing_app/services/data/stock.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
