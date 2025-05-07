@@ -1,3 +1,4 @@
+import 'package:billing_app/pages/add%20stores/add_stores.dart';
 import 'package:billing_app/pages/root/widgets/store_search_bar.dart';
 import 'package:billing_app/widgets/custom_app_bar.dart';
 import 'package:billing_app/widgets/custom_button.dart';
@@ -7,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'root_controller.dart';
 import 'root_model.dart';
-
 
 class MakeRootPage extends StatelessWidget {
   const MakeRootPage({super.key});
@@ -87,6 +87,16 @@ class _MakeRootViewState extends State<_MakeRootView> {
     super.dispose();
   }
 
+  // Navigate to AddStores page
+  void _addStore() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddStores(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,7 +150,7 @@ class _MakeRootViewState extends State<_MakeRootView> {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
               "Store Name",
@@ -157,6 +167,16 @@ class _MakeRootViewState extends State<_MakeRootView> {
                 widget.controller.addStore(storeName);
                 setState(() {});
               },
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: CustomButton(
+                text: "Add Store",
+                icon: Icons.add,
+                onPressed: _addStore,
+                isGradient: true,
+              ),
             ),
           ],
         ),
