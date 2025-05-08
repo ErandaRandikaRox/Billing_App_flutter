@@ -14,10 +14,46 @@ class BillController {
     model.addStore(name);
   }
 
-  void onAddItems() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Add Items functionality not implemented')),
-    );
+  void onAddItems({
+    String? productName,
+    String? productPrice,
+    String? productQuantity,
+  }) {
+    if (productName != null &&
+        productPrice != null &&
+        productQuantity != null &&
+        productName.isNotEmpty &&
+        productPrice.isNotEmpty &&
+        productQuantity.isNotEmpty) {
+      try {
+        final price = double.parse(productPrice);
+        final quantity = int.parse(productQuantity);
+        final amount = price * quantity;
+        model.addGood({
+          'name': productName,
+          'price': price,
+          'quantity': quantity,
+          'amount': amount,
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Item added successfully')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Invalid input: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields')),
+      );
+    }
   }
 
   void onSaveBill() {

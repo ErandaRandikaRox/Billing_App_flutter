@@ -1,4 +1,5 @@
 import 'package:billing_app/pages/add%20stores/add_stores.dart';
+import 'package:billing_app/pages/root/widgets/product_search_bar.dart';
 import 'package:billing_app/pages/root/widgets/store_search_bar.dart';
 import 'package:billing_app/widgets/custom_app_bar.dart';
 import 'package:billing_app/widgets/custom_button.dart';
@@ -59,6 +60,12 @@ class _MakeRootView extends StatefulWidget {
 
 class _MakeRootViewState extends State<_MakeRootView> {
   int _currentNavIndex = 1;
+  final TextEditingController _productNameController = TextEditingController();
+  final TextEditingController _productPriceController = TextEditingController();
+  final TextEditingController _productQuantityController = TextEditingController();
+  // Placeholder for route and vehicle (should be set dynamically)
+  String _route = ''; // e.g., "Route A"
+  String _vehicle = ''; // e.g., "Vehicle 123"
 
   @override
   void initState() {
@@ -84,6 +91,9 @@ class _MakeRootViewState extends State<_MakeRootView> {
     widget.discountController.dispose();
     widget.taxController.dispose();
     widget.netAmountController.dispose();
+    _productNameController.dispose();
+    _productPriceController.dispose();
+    _productQuantityController.dispose();
     super.dispose();
   }
 
@@ -124,13 +134,19 @@ class _MakeRootViewState extends State<_MakeRootView> {
               _buildSectionCard(
                 title: "Goods Section",
                 table: CustomTable(),
-                onAddPressed: widget.controller.onAddItems,
+                onAddPressed: () => widget.controller.onAddItems(
+                  productName: _productNameController.text,
+                  productPrice: _productPriceController.text,
+                  productQuantity: _productQuantityController.text,
+                ),
+                isGoodsSection: true,
               ),
               const SizedBox(height: 20),
               _buildSectionCard(
                 title: "Return Section",
                 table: CustomTable(),
                 onAddPressed: widget.controller.onAddItems,
+                isGoodsSection: false,
               ),
               const SizedBox(height: 20),
               _buildBillDetailsCard(),
@@ -146,7 +162,7 @@ class _MakeRootViewState extends State<_MakeRootView> {
   Widget _buildStoreNameSection() {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -188,10 +204,11 @@ class _MakeRootViewState extends State<_MakeRootView> {
     required String title,
     required Widget table,
     required VoidCallback onAddPressed,
+    required bool isGoodsSection,
   }) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -207,14 +224,49 @@ class _MakeRootViewState extends State<_MakeRootView> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
+            if (isGoodsSection) ...[
+              ProductSearchBar(
+                controller: _productNameController,
+                onProductSelected: (productName) {
+                  _productNameController.text = productName;
+                  setState(() {});
+                },
+                route: _route,
+                vehicle: _vehicle,
+              ),
+              const SizedBox(height: 10),
+              _buildDetailRow(
+                label: "Product Price",
+                controller: _productPriceController,
+                hintText: "Enter product price",
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 10),
+              _buildDetailRow(
+                label: "Product Quantity",
+                controller: _productQuantityController,
+                hintText: "Enter product quantity",
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 16),
+              CustomButton(
+                text: "Add Items",
+                icon: Icons.add,
+                onPressed: onAddPressed,
+                isGradient: true,
+              ),
+              const SizedBox(height: 16),
+            ],
             table,
             const SizedBox(height: 16),
-            CustomButton(
-              text: "Add Items",
-              icon: Icons.add,
-              onPressed: onAddPressed,
-              isGradient: true,
-            ),
+            if (!isGoodsSection) ...[
+              CustomButton(
+                text: "Add Items",
+                icon: Icons.add,
+                onPressed: onAddPressed,
+                isGradient: true,
+              ),
+            ],
           ],
         ),
       ),
@@ -224,7 +276,7 @@ class _MakeRootViewState extends State<_MakeRootView> {
   Widget _buildBillDetailsCard() {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -282,6 +334,7 @@ class _MakeRootViewState extends State<_MakeRootView> {
     required TextEditingController controller,
     required String hintText,
     bool isReadOnly = false,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return Row(
       children: [
@@ -319,7 +372,7 @@ class _MakeRootViewState extends State<_MakeRootView> {
                 borderSide: BorderSide(color: Colors.deepPurple, width: 2),
               ),
             ),
-            keyboardType: TextInputType.number,
+            keyboardType: keyboardType,
           ),
         ),
       ],
