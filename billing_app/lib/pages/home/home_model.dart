@@ -1,6 +1,5 @@
 import 'package:billing_app/services/data/goods_provider.dart';
 
-
 class HomeModel {
   String? selectedRoute;
   String? selectedVehicle;

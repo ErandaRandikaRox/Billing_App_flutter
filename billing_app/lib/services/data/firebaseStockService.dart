@@ -25,7 +25,7 @@ class FirebaseStockService {
         'date': date,
         'username': username,
         'timestamp': FieldValue.serverTimestamp(),
-        'status': 'active', // To indicate this is an active trip
+        'status': 'active',
       };
 
       // Create a batch write for atomicity
@@ -41,7 +41,7 @@ class FirebaseStockService {
           'productName': stock.productName,
           'quantity': stock.quantity,
           'price': stock.price,
-          'totalValue': stock.quantity * stock.price,
+          'totalPrice': stock.quantity * stock.price,
           'timestamp': FieldValue.serverTimestamp(),
         });
       }
@@ -60,12 +60,11 @@ class FirebaseStockService {
   // Get active trips for the current user
   Future<List<Map<String, dynamic>>> getActiveTrips() async {
     try {
-      final querySnapshot =
-          await _firestore
-              .collection('trips')
-              .where('status', isEqualTo: 'active')
-              .orderBy('timestamp', descending: true)
-              .get();
+      final querySnapshot = await _firestore
+          .collection('trips')
+          .where('status', isEqualTo: 'active')
+          .orderBy('timestamp', descending: true)
+          .get();
 
       return querySnapshot.docs
           .map((doc) => doc.data() as Map<String, dynamic>)
@@ -93,12 +92,11 @@ class FirebaseStockService {
   // Get stock items for a specific trip
   Future<List<StockModel>> getStocksForTrip(String tripId) async {
     try {
-      final stocksSnapshot =
-          await _firestore
-              .collection('trips')
-              .doc(tripId)
-              .collection('stocks')
-              .get();
+      final stocksSnapshot = await _firestore
+          .collection('trips')
+          .doc(tripId)
+          .collection('stocks')
+          .get();
 
       return stocksSnapshot.docs.map((doc) {
         final data = doc.data();
@@ -117,12 +115,11 @@ class FirebaseStockService {
   // Get trip history
   Future<List<Map<String, dynamic>>> getTripHistory() async {
     try {
-      final querySnapshot =
-          await _firestore
-              .collection('trips')
-              .orderBy('timestamp', descending: true)
-              .limit(50) // Limit to prevent retrieving too much data
-              .get();
+      final querySnapshot = await _firestore
+          .collection('trips')
+          .orderBy('timestamp', descending: true)
+          .limit(50)
+          .get();
 
       return querySnapshot.docs
           .map((doc) => doc.data() as Map<String, dynamic>)
@@ -148,17 +145,16 @@ class FirebaseStockService {
       final stocks = await getStocksForTrip(tripId);
 
       // Add stocks to trip data
-      tripData['stocks'] =
-          stocks
-              .map(
-                (stock) => {
-                  'productName': stock.productName,
-                  'quantity': stock.quantity,
-                  'price': stock.price,
-                  'totalValue': stock.quantity * stock.price,
-                },
-              )
-              .toList();
+      tripData['stocks'] = stocks
+          .map(
+            (stock) => {
+              'productName': stock.productName,
+              'quantity': stock.quantity,
+              'price': stock.price,
+              'totalPrice': stock.quantity * stock.price,
+            },
+          )
+          .toList();
 
       return tripData;
     } catch (e) {
@@ -175,26 +171,24 @@ class FirebaseStockService {
   }) async {
     try {
       // Get trips for the user and date
-      final tripsSnapshot =
-          await _firestore
-              .collection('trips')
-              .where('username', isEqualTo: username)
-              .where('date', isEqualTo: date)
-              .where('status', isEqualTo: 'active')
-              .get();
+      final tripsSnapshot = await _firestore
+          .collection('trips')
+          .where('username', isEqualTo: username)
+          .where('date', isEqualTo: date)
+          .where('status', isEqualTo: 'active')
+          .get();
 
       final productNames = <String>{};
       final results = <Map<String, dynamic>>[];
 
       // Fetch stocks for each matching trip
       for (var tripDoc in tripsSnapshot.docs) {
-        final stocksSnapshot =
-            await tripDoc.reference
-                .collection('stocks')
-                .where('productName', isGreaterThanOrEqualTo: query)
-                .where('productName', isLessThanOrEqualTo: '$query\uf8ff')
-                .limit(10)
-                .get();
+        final stocksSnapshot = await tripDoc.reference
+            .collection('stocks')
+            .where('productName', isGreaterThanOrEqualTo: query)
+            .where('productName', isLessThanOrEqualTo: '$query\uf8ff')
+            .limit(10)
+            .get();
 
         for (var stockDoc in stocksSnapshot.docs) {
           final data = stockDoc.data();
@@ -208,6 +202,87 @@ class FirebaseStockService {
     } catch (e) {
       print('Error searching products: $e');
       throw Exception('Failed to search products: $e');
+    }
+  }
+
+  // Update or add a single stock item for a trip
+  Future<void> updateStockForTrip({
+    required StockModel stock,
+    required String username,
+    required String date,
+    required String route,
+    required String vehicle,
+  }) async {
+    try {
+      // Find an active trip for the user and date
+      final tripsSnapshot = await _firestore
+          .collection('trips')
+          .where('username', isEqualTo: username)
+          .where('date', isEqualTo: date)
+          .where('status', isEqualTo: 'active')
+          .orderBy('timestamp', descending: true)
+          .limit(1)
+          .get();
+
+      String tripId;
+      DocumentReference tripRef;
+
+      if (tripsSnapshot.docs.isEmpty) {
+        // Create a new trip if none exists
+        tripRef = _firestore.collection('trips').doc();
+        tripId = tripRef.id;
+        await tripRef.set({
+          'id': tripId,
+          'route': route,
+          'vehicle': vehicle,
+          'date': date,
+          'username': username,
+          'timestamp': FieldValue.serverTimestamp(),
+          'status': 'active',
+        });
+      } else {
+        // Use the most recent trip
+        tripRef = tripsSnapshot.docs.first.reference;
+        tripId = tripsSnapshot.docs.first.id;
+      }
+
+      // Check if a stock document exists for the productName
+      final stockSnapshot = await tripRef
+          .collection('stocks')
+          .where('productName', isEqualTo: stock.productName)
+          .limit(1)
+          .get();
+
+      final batch = _firestore.batch();
+
+      if (stockSnapshot.docs.isEmpty) {
+        // Add new stock document
+        final stockDoc = tripRef.collection('stocks').doc();
+        batch.set(stockDoc, {
+          'productName': stock.productName,
+          'quantity': stock.quantity,
+          'price': stock.price,
+          'totalPrice': stock.quantity * stock.price,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      } else {
+        // Update existing stock document
+        final stockDoc = stockSnapshot.docs.first.reference;
+        batch.update(stockDoc, {
+          'quantity': stock.quantity,
+          'price': stock.price,
+          'totalPrice': stock.quantity * stock.price,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      }
+
+      // Commit the batch
+      await batch.commit();
+
+      print('Stock updated successfully for trip: $tripId');
+    } catch (e) {
+      print('Error updating stock: $e');
+      throw Exception('Failed to update stock: $e');
     }
   }
 }
