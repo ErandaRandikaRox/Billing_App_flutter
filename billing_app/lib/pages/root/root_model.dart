@@ -38,7 +38,10 @@ class BillModel {
 
   void _updateBillAmount() {
     billAmount = goods.fold(0.0, (sum, item) => sum + (item['amount'] ?? 0.0));
-    billAmount -= returns.fold(0.0, (sum, item) => sum + (item['amount'] ?? 0.0));
+    billAmount -= returns.fold(
+      0.0,
+      (sum, item) => sum + (item['amount'] ?? 0.0),
+    );
     _updateNetAmount();
   }
 

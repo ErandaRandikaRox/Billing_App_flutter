@@ -62,25 +62,33 @@ class _MakeRootViewState extends State<_MakeRootView> {
   int _currentNavIndex = 1;
   final TextEditingController _productNameController = TextEditingController();
   final TextEditingController _productPriceController = TextEditingController();
-  final TextEditingController _productQuantityController = TextEditingController();
-  // Placeholder for route and vehicle (should be set dynamically)
-  String _route = ''; // e.g., "Route A"
-  String _vehicle = ''; // e.g., "Vehicle 123"
+  final TextEditingController _productQuantityController =
+      TextEditingController();
 
   @override
   void initState() {
     super.initState();
     widget.billAmountController.addListener(() {
-      widget.controller.updateBillDetails(billAmount: widget.billAmountController.text);
-      widget.netAmountController.text = widget.model.netAmount.toStringAsFixed(2);
+      widget.controller.updateBillDetails(
+        billAmount: widget.billAmountController.text,
+      );
+      widget.netAmountController.text = widget.model.netAmount.toStringAsFixed(
+        2,
+      );
     });
     widget.discountController.addListener(() {
-      widget.controller.updateBillDetails(discount: widget.discountController.text);
-      widget.netAmountController.text = widget.model.netAmount.toStringAsFixed(2);
+      widget.controller.updateBillDetails(
+        discount: widget.discountController.text,
+      );
+      widget.netAmountController.text = widget.model.netAmount.toStringAsFixed(
+        2,
+      );
     });
     widget.taxController.addListener(() {
       widget.controller.updateBillDetails(tax: widget.taxController.text);
-      widget.netAmountController.text = widget.model.netAmount.toStringAsFixed(2);
+      widget.netAmountController.text = widget.model.netAmount.toStringAsFixed(
+        2,
+      );
     });
   }
 
@@ -101,9 +109,7 @@ class _MakeRootViewState extends State<_MakeRootView> {
   void _addStore() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const AddStores(),
-      ),
+      MaterialPageRoute(builder: (context) => const AddStores()),
     );
   }
 
@@ -134,11 +140,12 @@ class _MakeRootViewState extends State<_MakeRootView> {
               _buildSectionCard(
                 title: "Goods Section",
                 table: CustomTable(),
-                onAddPressed: () => widget.controller.onAddItems(
-                  productName: _productNameController.text,
-                  productPrice: _productPriceController.text,
-                  productQuantity: _productQuantityController.text,
-                ),
+                onAddPressed:
+                    () => widget.controller.onAddItems(
+                      productName: _productNameController.text,
+                      productPrice: _productPriceController.text,
+                      productQuantity: _productQuantityController.text,
+                    ),
                 isGoodsSection: true,
               ),
               const SizedBox(height: 20),
@@ -231,8 +238,6 @@ class _MakeRootViewState extends State<_MakeRootView> {
                   _productNameController.text = productName;
                   setState(() {});
                 },
-                route: _route,
-                vehicle: _vehicle,
               ),
               const SizedBox(height: 10),
               _buildDetailRow(

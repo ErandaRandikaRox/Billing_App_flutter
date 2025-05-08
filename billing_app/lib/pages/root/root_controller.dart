@@ -45,21 +45,23 @@ class BillController {
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please fill all fields')));
     }
   }
 
   void onSaveBill() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Bill saved successfully')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Bill saved successfully')));
   }
 
   void navigateToPage(int index) {
@@ -77,17 +79,10 @@ class BillController {
       default:
         return;
     }
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => page),
-    );
+    Navigator.push(context, MaterialPageRoute(builder: (context) => page));
   }
 
-  void updateBillDetails({
-    String? billAmount,
-    String? discount,
-    String? tax,
-  }) {
+  void updateBillDetails({String? billAmount, String? discount, String? tax}) {
     try {
       if (billAmount != null && billAmount.isNotEmpty) {
         model.setBillAmount(double.parse(billAmount));
