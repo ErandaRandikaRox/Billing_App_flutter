@@ -25,13 +25,16 @@ class _MyNavigationbarState extends State<MyNavigationbar> {
 
   @override
   Widget build(BuildContext context) {
+    // Determine brightness for system UI
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     // Set system UI overlay style
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
+      SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
+        statusBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
+        systemNavigationBarColor: Theme.of(context).colorScheme.surface,
+        systemNavigationBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
       ),
     );
 
@@ -42,14 +45,14 @@ class _MyNavigationbarState extends State<MyNavigationbar> {
         showDrawerIcons: true,
         showBackButton: false,
       ),
-      drawer: const CustomDrawer(), // Place the drawer here
+      drawer: const CustomDrawer(),
       body: IndexedStack(index: currentPageIndex, children: _pages),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           boxShadow: [
             BoxShadow(
-              color: Colors.black12,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
               blurRadius: 10,
               offset: const Offset(0, -3),
             ),
@@ -66,28 +69,23 @@ class _MyNavigationbarState extends State<MyNavigationbar> {
                 });
               },
               items: [
-                /// Home
                 SalomonBottomBarItem(
                   icon: const Icon(Icons.home_rounded),
                   title: const Text("Home"),
-                  selectedColor: Colors.deepPurple,
-                  unselectedColor: Colors.grey[400],
+                  selectedColor: Theme.of(context).colorScheme.primary,
+                  unselectedColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                 ),
-
-                /// Add Bill
                 SalomonBottomBarItem(
                   icon: const Icon(Icons.add_circle_rounded),
                   title: const Text("Add Bill"),
-                  selectedColor: Colors.deepPurple,
-                  unselectedColor: Colors.grey[400],
+                  selectedColor: Theme.of(context).colorScheme.primary,
+                  unselectedColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                 ),
-
-                /// Profile
                 SalomonBottomBarItem(
                   icon: const Icon(Icons.person_rounded),
                   title: const Text("Profile"),
-                  selectedColor: Colors.deepPurple,
-                  unselectedColor: Colors.grey[400],
+                  selectedColor: Theme.of(context).colorScheme.primary,
+                  unselectedColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                 ),
               ],
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -130,27 +128,37 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      leading:
-          showDrawerIcons
-              ? Builder(
-                builder:
-                    (context) => IconButton(
-                      icon: const Icon(Icons.menu),
-                      onPressed: () {
-                        Scaffold.of(context).openDrawer(); // ✅ Opens the drawer
-                      },
-                    ),
-              )
-              : showBackButton
-              ? IconButton(
-                icon: const Icon(Icons.arrow_back),
+      leading: showDrawerIcons
+          ? Builder(
+              builder: (context) => IconButton(
+                icon: Icon(
+                  Icons.menu,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
                 onPressed: () {
-                  Navigator.pop(context);
+                  Scaffold.of(context).openDrawer();
                 },
-              )
+              ),
+            )
+          : showBackButton
+              ? IconButton(
+                  icon: Icon(
+                    Icons.arrow_back,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                )
               : null,
-      title: Text(title),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onPrimary,
+        ),
+      ),
       actions: actions,
+      backgroundColor: Theme.of(context).colorScheme.primary,
     );
   }
 

@@ -32,25 +32,30 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Define default colors
+    // Define default colors from theme
     final defaultBackgroundColor =
-        isGradient ? Colors.deepPurple : (backgroundColor ?? Colors.deepPurple);
-    final defaultTextColor = textColor ?? Colors.white;
-    final defaultIconColor = iconColor ?? Colors.white;
+        backgroundColor ?? Theme.of(context).colorScheme.primary;
+    final defaultTextColor =
+        textColor ?? Theme.of(context).colorScheme.onPrimary;
+    final defaultIconColor =
+        iconColor ?? Theme.of(context).colorScheme.onPrimary;
 
     // Create gradient if needed
     final decoration =
         isGradient
             ? BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.deepPurple, Colors.deepPurpleAccent],
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.secondary,
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(borderRadius ?? 15),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.deepPurple.withOpacity(0.4),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
                   spreadRadius: 2,
                   blurRadius: 5,
                   offset: const Offset(0, 3),
@@ -149,12 +154,12 @@ class ButtonShowcaseScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-           
+            // Custom Button with Secondary Color
             CustomButton(
-              text: 'Custom Color',
+              text: 'Secondary Color',
               icon: Icons.save,
               onPressed: () {},
-              backgroundColor: Colors.teal,
+              backgroundColor: Theme.of(context).colorScheme.secondary,
               borderRadius: 20,
             ),
           ],

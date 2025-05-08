@@ -9,14 +9,42 @@ import 'package:flutter/material.dart';
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
 
-  void logout() {
-    final authservices = AuthService();
-    authservices.logout();
+  void logout(BuildContext context) {
+    final authServices = AuthService();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Logout'),
+        content: const Text('Are you sure you want to log out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              await authServices.logout();
+              Navigator.pop(context);
+              // Navigate to login screen (adjust route as needed)
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+            child: Text(
+              'Logout',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       child: Column(
         children: [
           Container(
@@ -24,7 +52,10 @@ class CustomDrawer extends StatelessWidget {
             padding: const EdgeInsets.only(top: 50, bottom: 20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.blue.shade700, Colors.blue.shade500],
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.secondary,
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -35,22 +66,21 @@ class CustomDrawer extends StatelessWidget {
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.2),
+                    color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.local_shipping,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onPrimary,
                     size: 64,
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   "Delivery App",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               ],
             ),
@@ -74,7 +104,7 @@ class CustomDrawer extends StatelessWidget {
                 _buildDrawerItem(
                   context: context,
                   icon: Icons.money,
-                  title: "Pined Bill",
+                  title: "Pinned Bill",
                   onTap: () {
                     Navigator.push(
                       context,
@@ -104,8 +134,7 @@ class CustomDrawer extends StatelessWidget {
                     );
                   },
                 ),
-
-                const Divider(),
+                Divider(color: Theme.of(context).dividerColor),
                 _buildDrawerItem(
                   context: context,
                   icon: Icons.settings,
@@ -124,20 +153,20 @@ class CustomDrawer extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Column(
               children: [
-                const Divider(),
+                Divider(color: Theme.of(context).dividerColor),
                 ListTile(
-                  leading: const Icon(Icons.logout, color: Colors.red),
-                  title: const Text(
-                    "Log out",
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  leading: Icon(
+                    Icons.logout,
+                    color: Theme.of(context).colorScheme.error,
                   ),
-                  onTap: () {
-                    // Handle logout
-                    logout();
-                  },
+                  title: Text(
+                    "Log out",
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.error,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  onTap: () => logout(context),
                 ),
               ],
             ),
@@ -154,10 +183,16 @@ class CustomDrawer extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: Theme.of(context).primaryColor),
+      leading: Icon(
+        icon,
+        color: Theme.of(context).colorScheme.primary,
+      ),
       title: Text(
         title,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
       ),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20),
