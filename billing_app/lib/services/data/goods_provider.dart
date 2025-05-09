@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
+
 
 // StockModel class as provided
 class StockModel {
