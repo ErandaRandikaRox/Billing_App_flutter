@@ -7,7 +7,7 @@ import 'package:billing_app/services/data/stock.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Make sure this import is in your pubspec.yaml
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomeController {
   final HomeModel model = HomeModel();
@@ -38,8 +38,10 @@ class HomeController {
     try {
       String username = await get_the_username.fetchUsername(authService);
       model.setUsername(username);
+      print('Username fetched: $username');
     } catch (e) {
       print('Error fetching username: $e');
+      model.setUsername('Unknown User'); // Fallback username
     }
   }
 
@@ -53,6 +55,9 @@ class HomeController {
         model.setCurrentTripId(activeTrips[0]['id']);
         model.setRoute(activeTrips[0]['route']);
         model.setVehicle(activeTrips[0]['vehicle']);
+        print('Active trip found: ${activeTrips[0]['id']}');
+      } else {
+        print('No active trips found');
       }
     } catch (e) {
       print('Error checking active trips: $e');
@@ -75,6 +80,7 @@ class HomeController {
 
         final goods = Provider.of<Goods>(context, listen: false);
         goods.addStock(newStock);
+        print('Stock added: ${newStock.productName}, ${newStock.quantity}, ${newStock.price}');
 
         // Clear input fields
         productNameController.clear();
@@ -92,11 +98,24 @@ class HomeController {
   Future<void> startTrip(BuildContext context) async {
     final goods = Provider.of<Goods>(context, listen: false);
 
+    // Log the current state for debugging
+    print('Starting trip with:');
+    print('Route: ${model.selectedRoute}');
+    print('Vehicle: ${model.selectedVehicle}');
+    print('Username: ${model.username}');
+    print('Stocks: ${goods.stocks.length} items');
+    goods.stocks.forEach((stock) {
+      print('- ${stock.productName}: ${stock.quantity} @ ${stock.price}');
+    });
+
+    // Validate trip requirements
     if (!model.canStartTrip(goods.stocks)) {
-      _showErrorSnackBar(
-        context,
-        'Please select a route and vehicle, and add at least one stock item',
-      );
+      String errorMessage = 'Cannot start trip. Please ensure:';
+      if (model.selectedRoute == null) errorMessage += '\n- A route is selected';
+      if (model.selectedVehicle == null) errorMessage += '\n- A vehicle is selected';
+      if (goods.stocks.isEmpty) errorMessage += '\n- At least one stock item is added';
+      if (model.username == null) errorMessage += '\n- Username is available';
+      _showErrorSnackBar(context, errorMessage);
       return;
     }
 
@@ -106,7 +125,7 @@ class HomeController {
       // Create trip document in Firestore
       final tripRef = _firestore.collection('trips').doc();
       final String tripId = tripRef.id;
-      
+
       // Prepare trip data
       final tripData = {
         'id': tripId,
@@ -115,15 +134,15 @@ class HomeController {
         'date': dateController.text,
         'username': model.username,
         'timestamp': FieldValue.serverTimestamp(),
-        'status': 'active', // To indicate this is an active trip
+        'status': 'active',
       };
-      
+
       // Create batch write for better transaction handling
       final batch = _firestore.batch();
-      
+
       // Add the trip document
       batch.set(tripRef, tripData);
-      
+
       // Add each stock item as a separate document in a subcollection
       for (var stock in goods.stocks) {
         final stockDoc = tripRef.collection('stocks').doc();
@@ -135,13 +154,14 @@ class HomeController {
           'timestamp': FieldValue.serverTimestamp(),
         });
       }
-      
+
       // Commit the batch write
       await batch.commit();
-      
+      print('Trip data saved to Firestore with ID: $tripId');
+
       // Set current trip ID in the model
       model.setCurrentTripId(tripId);
-      
+
       // Show success message
       _showSuccessSnackBar(context, 'Trip started successfully');
 
@@ -150,9 +170,8 @@ class HomeController {
         context,
         MaterialPageRoute(builder: (context) => const MakeRootPage()),
       );
-
-      return;
     } catch (e) {
+      print('Error starting trip: $e');
       _showErrorSnackBar(context, 'Failed to start trip: $e');
     } finally {
       model.setLoading(false);
@@ -168,7 +187,7 @@ class HomeController {
 
     try {
       model.setLoading(true);
-      
+
       // Update the trip document to mark it as completed
       await _firestore.collection('trips').doc(model.currentTripId).update({
         'status': 'completed',
@@ -217,11 +236,13 @@ class HomeController {
   // Route change handler
   void onRouteChanged(String? value) {
     model.setRoute(value);
+    print('Route changed to: $value');
   }
 
   // Vehicle change handler
   void onVehicleChanged(String? value) {
     model.setVehicle(value);
+    print('Vehicle changed to: $value');
   }
 
   // Initialize the controller
