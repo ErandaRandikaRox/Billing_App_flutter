@@ -134,7 +134,7 @@ class StockTable extends StatelessWidget {
         route: homeModel.selectedRoute!,
         vehicle: homeModel.selectedVehicle!,
         date: currentDate,
-        username: homeModel.username!,
+        username: homeModel.username!, section: '',
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -284,7 +284,7 @@ void AlertBox(BuildContext context, {required String productName}) {
                   username: homeModel.username!,
                   date: currentDate,
                   route: homeModel.selectedRoute!,
-                  vehicle: homeModel.selectedVehicle!,
+                  vehicle: homeModel.selectedVehicle!, section: '',
                 );
 
                 // Update local Goods provider

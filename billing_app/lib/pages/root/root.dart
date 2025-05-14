@@ -5,7 +5,9 @@ import 'package:billing_app/widgets/custom_app_bar.dart';
 import 'package:billing_app/widgets/custom_button.dart';
 import 'package:billing_app/widgets/custom_drawer.dart';
 import 'package:billing_app/widgets/custom_table.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'root_controller.dart';
 import 'root_model.dart';
@@ -62,8 +64,10 @@ class _MakeRootViewState extends State<_MakeRootView> {
   int _currentNavIndex = 1;
   final TextEditingController _productNameController = TextEditingController();
   final TextEditingController _productPriceController = TextEditingController();
-  final TextEditingController _productQuantityController =
-      TextEditingController();
+  final TextEditingController _productQuantityController = TextEditingController();
+  final TextEditingController _returnNameController = TextEditingController();
+  final TextEditingController _returnPriceController = TextEditingController();
+  final TextEditingController _returnQuantityController = TextEditingController();
 
   @override
   void initState() {
@@ -72,23 +76,17 @@ class _MakeRootViewState extends State<_MakeRootView> {
       widget.controller.updateBillDetails(
         billAmount: widget.billAmountController.text,
       );
-      widget.netAmountController.text = widget.model.netAmount.toStringAsFixed(
-        2,
-      );
+      widget.netAmountController.text = widget.model.netAmount.toStringAsFixed(2);
     });
     widget.discountController.addListener(() {
       widget.controller.updateBillDetails(
         discount: widget.discountController.text,
       );
-      widget.netAmountController.text = widget.model.netAmount.toStringAsFixed(
-        2,
-      );
+      widget.netAmountController.text = widget.model.netAmount.toStringAsFixed(2);
     });
     widget.taxController.addListener(() {
       widget.controller.updateBillDetails(tax: widget.taxController.text);
-      widget.netAmountController.text = widget.model.netAmount.toStringAsFixed(
-        2,
-      );
+      widget.netAmountController.text = widget.model.netAmount.toStringAsFixed(2);
     });
   }
 
@@ -102,10 +100,12 @@ class _MakeRootViewState extends State<_MakeRootView> {
     _productNameController.dispose();
     _productPriceController.dispose();
     _productQuantityController.dispose();
+    _returnNameController.dispose();
+    _returnPriceController.dispose();
+    _returnQuantityController.dispose();
     super.dispose();
   }
 
-  // Navigate to AddStores page
   void _addStore() {
     Navigator.push(
       context,
@@ -115,6 +115,9 @@ class _MakeRootViewState extends State<_MakeRootView> {
 
   @override
   Widget build(BuildContext context) {
+    final String currentDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
+    final String username = FirebaseAuth.instance.currentUser?.uid ?? 'Unknown User';
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: CustomAppBar(
@@ -139,21 +142,32 @@ class _MakeRootViewState extends State<_MakeRootView> {
               const SizedBox(height: 20),
               _buildSectionCard(
                 title: "Goods Section",
-                table: CustomTable(),
-                onAddPressed:
-                    () => widget.controller.onAddItems(
-                      productName: _productNameController.text,
-                      productPrice: _productPriceController.text,
-                      productQuantity: _productQuantityController.text,
-                    ),
+                table: CustomTable(section: 'Goods Section'),
+                onAddPressed: () => widget.controller.onAddItems(
+                  productName: _productNameController.text,
+                  productPrice: _productPriceController.text,
+                  productQuantity: _productQuantityController.text,
+                  section: 'Goods Section',
+                ),
                 isGoodsSection: true,
+                currentDate: currentDate,
+                username: username,
+                section: 'Goods Section',
               ),
               const SizedBox(height: 20),
               _buildSectionCard(
                 title: "Return Section",
-                table: CustomTable(),
-                onAddPressed: widget.controller.onAddItems,
+                table: CustomTable(section: 'Return Section'),
+                onAddPressed: () => widget.controller.onAddItems(
+                  productName: _returnNameController.text,
+                  productPrice: _returnPriceController.text,
+                  productQuantity: _returnQuantityController.text,
+                  section: 'Return Section',
+                ),
                 isGoodsSection: false,
+                currentDate: currentDate,
+                username: username,
+                section: 'Return Section',
               ),
               const SizedBox(height: 20),
               _buildBillDetailsCard(),
@@ -212,6 +226,9 @@ class _MakeRootViewState extends State<_MakeRootView> {
     required Widget table,
     required VoidCallback onAddPressed,
     required bool isGoodsSection,
+    required String currentDate,
+    required String username,
+    required String section,
   }) {
     return Card(
       elevation: 4,
@@ -231,47 +248,44 @@ class _MakeRootViewState extends State<_MakeRootView> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            if (isGoodsSection) ...[
-              ProductSearchBar(
-                controller: _productNameController,
-                onProductSelected: (productName) {
+            ProductSearchBar(
+              controller: isGoodsSection ? _productNameController : _returnNameController,
+              onProductSelected: (productName) {
+                if (isGoodsSection) {
                   _productNameController.text = productName;
-                  setState(() {});
-                },
-              ),
-              const SizedBox(height: 10),
-              _buildDetailRow(
-                label: "Product Price",
-                controller: _productPriceController,
-                hintText: "Enter product price",
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 10),
-              _buildDetailRow(
-                label: "Product Quantity",
-                controller: _productQuantityController,
-                hintText: "Enter product quantity",
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 16),
-              CustomButton(
-                text: "Add Items",
-                icon: Icons.add,
-                onPressed: onAddPressed,
-                isGradient: true,
-              ),
-              const SizedBox(height: 16),
-            ],
-            table,
+                } else {
+                  _returnNameController.text = productName;
+                }
+                setState(() {});
+              },
+              date: currentDate,
+              route: widget.storeNameController.text,
+              username: username,
+              section: section,
+            ),
+            const SizedBox(height: 10),
+            _buildDetailRow(
+              label: isGoodsSection ? "Product Price" : "Return Price",
+              controller: isGoodsSection ? _productPriceController : _returnPriceController,
+              hintText: isGoodsSection ? "Enter product price" : "Enter return price",
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 10),
+            _buildDetailRow(
+              label: isGoodsSection ? "Product Quantity" : "Return Quantity",
+              controller: isGoodsSection ? _productQuantityController : _returnQuantityController,
+              hintText: isGoodsSection ? "Enter product quantity" : "Enter return quantity",
+              keyboardType: TextInputType.number,
+            ),
             const SizedBox(height: 16),
-            if (!isGoodsSection) ...[
-              CustomButton(
-                text: "Add Items",
-                icon: Icons.add,
-                onPressed: onAddPressed,
-                isGradient: true,
-              ),
-            ],
+            CustomButton(
+              text: "Add Items",
+              icon: Icons.add,
+              onPressed: onAddPressed,
+              isGradient: true,
+            ),
+            const SizedBox(height: 16),
+            table,
           ],
         ),
       ),
@@ -301,25 +315,29 @@ class _MakeRootViewState extends State<_MakeRootView> {
               label: "Bill Amount",
               controller: widget.billAmountController,
               hintText: "Enter bill amount",
+              keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 10),
             _buildDetailRow(
-              label: "Return",
+              label: "Discount",
               controller: widget.discountController,
-              hintText: "Return data",
+              hintText: "Enter discount",
+              keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 10),
             _buildDetailRow(
-              label: "Cash",
+              label: "Tax",
               controller: widget.taxController,
-              hintText: "Cash",
+              hintText: "Enter tax",
+              keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 10),
             _buildDetailRow(
-              label: "Credit",
+              label: "Net Amount",
               controller: widget.netAmountController,
-              hintText: "Credit",
+              hintText: "Net amount",
               isReadOnly: true,
+              keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 16),
             CustomButton(

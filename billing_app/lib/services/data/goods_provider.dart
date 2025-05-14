@@ -1,18 +1,22 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
-
-// StockModel class as provided
 class StockModel {
+  final String productId;
   final String productName;
   final int quantity;
   final double price;
+  final String section;
 
-  StockModel(this.quantity, this.price, {required this.productName});
+  StockModel(
+    this.quantity,
+    this.price, {
+    required this.productName,
+    this.productId = '',
+    this.section = 'Goods Section',
+  });
 }
 
-// Goods class to manage a list of StockModel items
 class Goods with ChangeNotifier {
-  // List initialized with 6 provided items and 4 random spice items
   final List<StockModel> _list = [];
 
   List<StockModel> get stocks => _list;
@@ -22,31 +26,35 @@ class Goods with ChangeNotifier {
     notifyListeners();
   }
 
-  // Update an existing stock item by productName
   void updateStock(String productName, StockModel updatedStock) {
-    final index = _list.indexWhere((stock) => stock.productName == productName);
+    final index = _list.indexWhere(
+      (stock) => stock.productName == productName && stock.section == updatedStock.section,
+    );
     if (index != -1) {
       _list[index] = updatedStock;
-      notifyListeners();
+    } else {
+      _list.add(updatedStock);
     }
-  }
-
-  // Remove a stock item by productName
-  void removeStock(String productName) {
-    _list.removeWhere((stock) => stock.productName == productName);
     notifyListeners();
   }
 
-  // Get a stock item by productName
-  StockModel? getStockByName(String productName) {
+  void removeStock(String productName, {String? section}) {
+    _list.removeWhere(
+      (stock) => stock.productName == productName && (section == null || stock.section == section),
+    );
+    notifyListeners();
+  }
+
+  StockModel? getStockByName(String productName, {String? section}) {
     try {
-      return _list.firstWhere((stock) => stock.productName == productName);
+      return _list.firstWhere(
+        (stock) => stock.productName == productName && (section == null || stock.section == section),
+      );
     } catch (e) {
       return null;
     }
   }
 
-  // Clear all stocks
   void clearStocks() {
     _list.clear();
     notifyListeners();

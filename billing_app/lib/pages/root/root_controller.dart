@@ -17,7 +17,7 @@ class BillController {
   void onAddItems({
     String? productName,
     String? productPrice,
-    String? productQuantity,
+    String? productQuantity, required String section,
   }) {
     if (productName != null &&
         productPrice != null &&

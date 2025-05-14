@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class CustomTable extends StatefulWidget {
   final List<Map<String, dynamic>> data;
 
-  const CustomTable({super.key, this.data = const []});
+  const CustomTable({super.key, this.data = const [], required String section});
 
   @override
   State<CustomTable> createState() => _CustomTableState();
@@ -282,7 +282,7 @@ class TableShowcaseScreen extends StatelessWidget {
           data: [
             {'product': 'Product A', 'quantity': '3', 'price': 'Rs12.50'},
             {'product': 'Product B', 'quantity': '7', 'price': 'Rs18.75'},
-          ],
+          ], section: '',
         ),
       ),
     );

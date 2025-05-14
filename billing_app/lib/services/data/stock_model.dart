@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:billing_app/services/data/goods_provider.dart';
 import 'package:billing_app/services/data/firebaseStockService.dart';
-import 'package:billing_app/pages/home/home_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
-// StockTable widget to display stock data from Goods provider
 class StockTable extends StatelessWidget {
-  const StockTable({super.key});
+  final String section;
+
+  const StockTable({super.key, required this.section});
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +19,9 @@ class StockTable extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         child: Consumer<Goods>(
           builder: (context, goods, child) {
+            final filteredStocks = goods.stocks
+                .where((stock) => stock.section == section)
+                .toList();
             return Table(
               defaultVerticalAlignment: TableCellVerticalAlignment.middle,
               border: TableBorder(
@@ -32,18 +36,18 @@ class StockTable extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               columnWidths: const {
-                0: FlexColumnWidth(2), // Product column (Wider)
-                1: FlexColumnWidth(1), // Quantity column (Reduced width)
-                2: FlexColumnWidth(2), // Price column (Wider)
-                3: FixedColumnWidth(60), // Edit column (Reduced width)
+                0: FlexColumnWidth(1.5), // Product ID
+                1: FlexColumnWidth(2), // Product Name
+                2: FlexColumnWidth(1), // Quantity
+                3: FlexColumnWidth(1.5), // Price
+                4: FixedColumnWidth(60), // Edit
               },
               children: [
-                // Header Row
                 _buildHeaderRow(),
-                // Data Rows from Goods provider
-                ...goods.stocks.map(
+                ...filteredStocks.map(
                   (stock) => _buildDataRow(
                     context,
+                    stock.productId,
                     stock.productName,
                     stock.quantity.toString(),
                     'Rs${stock.price.toStringAsFixed(2)}',
@@ -64,8 +68,9 @@ class StockTable extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       children: const [
+        _HeaderCell(text: 'ID'),
         _HeaderCell(text: 'Product'),
-        _HeaderCell(text: 'Quty'),
+        _HeaderCell(text: 'Qty'),
         _HeaderCell(text: 'Price'),
         _HeaderCell(text: 'Edit'),
       ],
@@ -74,16 +79,18 @@ class StockTable extends StatelessWidget {
 
   TableRow _buildDataRow(
     BuildContext context,
-    String product,
+    String productId,
+    String productName,
     String quantity,
     String price,
   ) {
     return TableRow(
       children: [
-        _DataCell(text: product),
+        _DataCell(text: productId.length > 8 ? '${productId.substring(0, 8)}...' : productId),
+        _DataCell(text: productName),
         _DataCell(text: quantity),
         _DataCell(text: price),
-        _EditCell(productName: product),
+        _EditCell(productName: productName, section: section),
       ],
     );
   }
@@ -123,6 +130,7 @@ class _DataCell extends StatelessWidget {
         child: Text(
           text,
           style: const TextStyle(color: Colors.black87, fontSize: 14),
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );
@@ -131,7 +139,9 @@ class _DataCell extends StatelessWidget {
 
 class _EditCell extends StatelessWidget {
   final String productName;
-  const _EditCell({required this.productName});
+  final String section;
+
+  const _EditCell({required this.productName, required this.section});
 
   @override
   Widget build(BuildContext context) {
@@ -140,7 +150,7 @@ class _EditCell extends StatelessWidget {
         child: IconButton(
           icon: Icon(Icons.edit, color: Colors.blue.shade600),
           onPressed: () {
-            AlertBox(context, productName: productName);
+            AlertBox(context, productName: productName, section: section);
           },
         ),
       ),
@@ -148,8 +158,7 @@ class _EditCell extends StatelessWidget {
   }
 }
 
-// AlertBox implementation with Firebase upload
-void AlertBox(BuildContext context, {required String productName}) {
+void AlertBox(BuildContext context, {required String productName, required String section}) {
   final quantityController = TextEditingController();
   final priceController = TextEditingController();
   final FirebaseStockService _stockService = FirebaseStockService();
@@ -172,12 +181,16 @@ void AlertBox(BuildContext context, {required String productName}) {
           children: [
             TextField(
               controller: quantityController,
-              decoration: const InputDecoration(labelText: 'Quantity (grams)'),
+              decoration: InputDecoration(
+                labelText: section == 'Return Section' ? 'Return Quantity' : 'Quantity',
+              ),
               keyboardType: TextInputType.number,
             ),
             TextField(
               controller: priceController,
-              decoration: const InputDecoration(labelText: 'Price (Rs/g)'),
+              decoration: InputDecoration(
+                labelText: section == 'Return Section' ? 'Return Price (Rs)' : 'Price (Rs)',
+              ),
               keyboardType: TextInputType.number,
             ),
           ],
@@ -196,35 +209,55 @@ void AlertBox(BuildContext context, {required String productName}) {
                 return;
               }
               try {
-                final quantity = int.parse(quantityController.text);
+                int quantity = int.parse(quantityController.text);
                 final price = double.parse(priceController.text);
+
+                // Negate quantity for Return Section
+                if (section == 'Return Section') {
+                  quantity = -quantity;
+                  // Validate return quantity doesn't exceed available stock
+                  final totalGoods = goods.stocks
+                      .where((s) => s.productName == productName && s.section == 'Goods Section')
+                      .fold(0, (sum, s) => sum + s.quantity);
+                  final totalReturns = goods.stocks
+                      .where((s) => s.productName == productName && s.section == 'Return Section')
+                      .fold(0, (sum, s) => sum + s.quantity);
+                  if (quantity.abs() > totalGoods + totalReturns) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Return quantity exceeds available stock')),
+                    );
+                    return;
+                  }
+                }
+
                 final updatedStock = StockModel(
                   quantity,
                   price,
                   productName: productName,
+                  section: section,
                 );
 
-                // Get HomeModel for route, vehicle, and username
-                final homeModel = Provider.of<HomeModel>(context, listen: false);
-                if (homeModel.username == null ||
-                    homeModel.selectedRoute == null ||
-                    homeModel.selectedVehicle == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Trip details incomplete')),
-                  );
-                  return;
-                }
-
-                // Convert current date to yyyy-MM-dd
-                final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+                // Use FirebaseAuth for username
+                final username = FirebaseAuth.instance.currentUser?.uid ?? 'Unknown User';
+                // Use storeNameController from root.dart context if available
+                final route = Provider.of<TextEditingController>(
+                      context,
+                      listen: false,
+                    ).text.isNotEmpty
+                    ? Provider.of<TextEditingController>(context, listen: false).text
+                    : 'Unknown Route';
+                // Hardcode vehicle or fetch from a reliable source
+                const vehicle = 'Unknown Vehicle';
+                final currentDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
                 // Save to Firebase
                 await _stockService.updateStockForTrip(
                   stock: updatedStock,
-                  username: homeModel.username!,
+                  username: username,
                   date: currentDate,
-                  route: homeModel.selectedRoute!,
-                  vehicle: homeModel.selectedVehicle!,
+                  route: route,
+                  vehicle: vehicle,
+                  section: section,
                 );
 
                 // Update local Goods provider
